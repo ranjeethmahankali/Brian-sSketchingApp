@@ -1,2 +1,15 @@
-This should show the tree of drawings
-when user clicks on an <a >image</a> he sees the scribble app.
+<!DOCTYPE html>
+<html>
+    <head></head>
+    <body>
+        This should show the tree of drawings
+        when user clicks on an image he sees the 
+        <a id='scribble' href="javascript:openScribble()">scribble app</a>
+        <script type='text/javascript'>
+            function openScribble(){
+                var scrib = window.open('scribble.html','scribble', 'width=650,height=450');
+                return scrib;
+            }
+        </script>
+    </body>
+</html>
