@@ -2,7 +2,6 @@
 var canvas1 = document.getElementById("canvas_1");
 var canvas2 = document.getElementById("canvas_2");
 var canvas3 = document.getElementById("canvas_3");
-var gridCanvas = document.getElementById("canvas_grid");
 var c1 = canvas1.getContext("2d");
 	c1.fillStyle = $('#fillColor').val();
 	c1.strokeStyle =  $('#strokeColor').val();
@@ -15,13 +14,10 @@ var c2 = canvas2.getContext("2d");
 var c3 = canvas3.getContext("2d");
 	c3.strokeStyle = 'green';
 	c3.lineWidth = 3;
-var gc = gridCanvas.getContext("2d");
-	gc.strokeStyle = '#000000';
-	gc.lineWidth = 1;
 
 var mouse1X, mouse1Y, mouse2X, mouse2Y,mouse_ix,mouse_iy,mouseX,mouseY;
 var centerX, centerY, radius, startAngle, stopAngle;
-var curSnap = 'none';//the current snapping point
+
 var penIsDown = false;
 var centerSelected = false;
 var curveStarted = false;
@@ -30,7 +26,6 @@ var toolList = document.getElementById('tool_list');
 var helpText = $('#help_text');
 var imageData;
 var eraserSize = 30;;
-var snappingDistance = 20;
 
 var currentTool = "none";
 
@@ -59,55 +54,7 @@ var axisLength;
 var scaleFactor = 1;
 //variables for ellipse tool</>
 
-var testObj;
-
-var snapVertices = new Array();
-var gridSize = Number($('#gridSize').val());
-var gridPoints = new Array();//gridPoints to snap to
-
-var lines = new Array();
-var rectangles = new Array();
-var circles = new Array();
-var freeHand = new Array();
-var curves = new Array();
-var eraseArray = new Array();
-		
-function isSnappingTo(pos, markBool){//returns if the position pos is within the snapping distance of another vertex
-	//markBool parameters determines if the sanpping is shown on the screen or not.
-	var snapPts = new Array();//the points which it is actually snapping to
-	
-	for(var i=0; i<snapVertices.length; i++){//checking if snapping to vertices
-		var distance = dist(snapVertices[i][0], snapVertices[i][1], pos[0], pos[1]);
-		if(distance < snappingDistance){
-			snapPts.push(new Array(snapVertices[i][0], snapVertices[i][1], distance));
-		}
-	}
-	
-	if(gridCheckBox.checked){
-		for(var i=0; i<gridPoints.length; i++){//checking if snapping to gridPoints
-			var distance = dist(gridPoints[i][0], gridPoints[i][1], pos[0], pos[1]);
-			if(distance < snappingDistance){
-				snapPts.push(new Array(gridPoints[i][0], gridPoints[i][1], distance));
-			}
-		}
-	}
-	
-	sort2D(snapPts, 2);
-	var snapPt;
-	if(snapPts.length > 0){
-		snapPt = new Array(snapPts[0][0],snapPts[0][1]);;
-		if(markBool){markPt(snapPt,c3);}
-		return snapPt;
-	}else{
-		return 'none';
-	}
-}
-
-function addVertex(x,y){// adds the given vertex to teh snapVertices array
-	var pt = [x,y];
-	snapVertices.push(pt);
-	//markPt(pt,c1);
-}
+var sketch = new Array();
 
 function cleanArray(ar){//cleans up a 2d array by deleting any duplicated elements
 	for (var i = 0; i < ar.length; i++){
@@ -116,7 +63,7 @@ function cleanArray(ar){//cleans up a 2d array by deleting any duplicated elemen
 	}
 }
 
-function clearTempCanvases(){//clears all the temporary canvases that hold previews and snap points etc.
+function clearTempCanvases(){//clears all the temporary canvases that hold previews 
 	c2.clearRect(0,0,canvas2.width,canvas2.height);
 	c3.clearRect(0,0,canvas2.width,canvas2.height);
 }
@@ -195,41 +142,6 @@ function colorPixel(pix){
 	imageData.data[pix+3] = 255;
 }
 
-function toggleGrid(){//toggles the grid on and off
-	//console.log($('#gridSize').val());
-	gridSize = Number($('#gridSize').val());//updated the gridSize
-	gc.clearRect(0,0,gridCanvas.width,gridCanvas.height);
-	gridPoints = [];
-	if(gridCheckBox.checked){
-		$('#gridSizeTool').show();
-		//drawing vertical lines
-		for(var x=gridSize; x<gridCanvas.width; x+=gridSize){
-			gc.beginPath();
-			gc.moveTo(x,0);
-			gc.lineTo(x,gridCanvas.height);
-			gc.stroke();
-		}
-		//drawing horizontal lines
-		for(var y=gridSize; y<gridCanvas.height; y+=gridSize){
-			gc.beginPath();
-			gc.moveTo(0,y);
-			gc.lineTo(gridCanvas.width, y);
-			gc.stroke();
-		}
-		//filling up the gridPoints array with grid points
-		for(var x = 0; x <= gridCanvas.width; x += gridSize){
-			for(var y = 0; y <= gridCanvas.height; y += gridSize){
-				gridPoints.push(new Array(x,y));
-				//markPt(new Array(x,y), gc);
-			}
-		}
-	}else{
-		gc.clearRect(0,0,gridCanvas.width, gridCanvas.height);
-		gridPoints = [];
-		$('#gridSizeTool').hide();
-	}
-}
-
 function renderObject(obj, rc){
 	if(rc == typeof undefined) {
 		rc = c1;
@@ -241,9 +153,6 @@ function renderObject(obj, rc){
 		rc.moveTo(obj.startPt[0], obj.startPt[1]);
 		rc.lineTo(obj.endPt[0], obj.endPt[1]);
 		rc.stroke();
-		//adding the snapping points
-		addVertex(obj.startPt[0], obj.startPt[1]);
-		addVertex(obj.endPt[0], obj.endPt[1]);
 	}else if(obj.type == "rectangle"){
 		rc.lineWidth = obj.strokeWidth;
 		rc.strokeStyle = obj.strokeColor;
@@ -253,20 +162,12 @@ function renderObject(obj, rc){
 			rc.fillRect(obj.vert1[0],obj.vert1[1],obj.vert2[0]-obj.vert1[0],obj.vert2[1]-obj.vert1[1]);
 		}
 		rc.strokeRect(obj.vert1[0],obj.vert1[1],obj.vert2[0]-obj.vert1[0],obj.vert2[1]-obj.vert1[1]);
-		//adding the snapping points
-		addVertex(obj.vert1[0],obj.vert1[1]);
-		addVertex(obj.vert2[0],obj.vert2[1]);
-		addVertex(obj.vert1[0],obj.vert2[1]);
-		addVertex(obj.vert2[0],obj.vert1[1]);
 	}else if(obj.type == "circle"){
 		rc.lineWidth = obj.strokeWidth;
 		rc.strokeStyle = obj.strokeColor;
 		rc.beginPath();
 		rc.arc(obj.center[0], obj.center[1], obj.rad, obj.Ang1, obj.Ang2);
 		rc.stroke();
-		//adding the snapping points
-		addVertex(obj.vert1[0], obj.vert1[1]);
-		addVertex(obj.vert2[0], obj.vert2[1]);
 	}
 	else if(obj.type == "freehand"){
 		rc.lineWidth = obj.strokeWidth;
@@ -285,9 +186,6 @@ function renderObject(obj, rc){
 		rc.moveTo(obj.startPt[0], obj.startPt[1]);
 		rc.quadraticCurveTo(obj.intPt[0],obj.intPt[1], obj.endPt[0], obj.endPt[1]);
 		rc.stroke();
-		//adding the snapping points
-		addVertex(obj.startPt[0], obj.startPt[1]);
-		addVertex(obj.endPt[0], obj.endPt[1]);
 	}
 	else if(obj.type == "flood"){
 		rc.fillStyle = obj.floodColor;
@@ -295,22 +193,11 @@ function renderObject(obj, rc){
 	}
 	else if(obj.type == "erase"){
 		rc.clearRect(obj.vert1[0],obj.vert1[1],obj.vert2[0]-obj.vert1[0],obj.vert2[1]-obj.vert1[1]);
-		//deleting the snap points from the erased area
-		for(var i=0; i<snapVertices.length; i++){
-			if((snapVertices[i][0]>obj.vert1[0] && snapVertices[i][0]<obj.vert2[0])||
-				(snapVertices[i][0]>obj.vert2[0] && snapVertices[i][0]<obj.vert1[0])){
-					if((snapVertices[i][1]>obj.vert1[1] && snapVertices[i][1]<obj.vert2[1])||
-						(snapVertices[i][1]>obj.vert2[1] && snapVertices[i][1]<obj.vert1[1])){
-							snapVertices.splice(i,1);
-							i--;
-						}
-				}
-		}
 	}
 	else if(obj.type == "image"){
 		var img = new Image();
 		img.src = obj.image;
-		rc.drawImage(img,0,0,canvas1.width,canvas1.height);
+		img.onload = function(){rc.drawImage(img,0,0,canvas1.width,canvas1.height);}
 	}
 	else if(obj.type == "text"){
 		rc.font = obj.font;
@@ -335,15 +222,10 @@ function renderObject(obj, rc){
 		rc.arc(axisLength/2,0,axisLength/2,0,2*Math.PI);
 		rc.restore();
 		if(obj.tobeFilled){rc.fill();}
-		rc.stroke();
-		//adding vertices for snapping
+		rc.stroke(); 
 		var ellipseCenter = [(obj.vert1[0]+obj.vert2[0])/2, (obj.vert1[1]+obj.vert2[1])/2];
 		var end1 = vSum(ellipseCenter,minAxis);
 		var end2 = vDiff(ellipseCenter,minAxis);
-		addVertex(obj.vert1[0],obj.vert1[1]);
-		addVertex(obj.vert2[0],obj.vert2[1]);
-		addVertex(obj.vert3[0],obj.vert3[1]);
-		addVertex(obj.vert4[0],obj.vert4[1]);
 	}
 	else if(obj.type = 'polygon'){
 		rc.strokeStyle = obj.strokeColor;
@@ -358,10 +240,6 @@ function renderObject(obj, rc){
 		rc.closePath();
 		if(obj.toBeFilled){rc.fill();}
 		rc.stroke();
-		
-		for(var x = 0; x < obj.vertAr.length; x++){
-			addVertex(obj.vertAr[x][0], obj.vertAr[x][1]);
-		}
 	}
 }
 
@@ -373,11 +251,6 @@ $('.scribblePad').click(function(e){
 		if(!penIsDown){
 			mouse1X = e.pageX - this.offsetLeft;
 			mouse1Y = e.pageY - this.offsetTop;
-			//snapping to nearest points if any
-			if(curSnap != 'none'){
-				mouse1X = curSnap[0];
-				mouse1Y = curSnap[1];
-			}
 			
 			penIsDown = true;
 			helpText.text('Pick the ending point or Hit Esc to stop drawing');
@@ -385,11 +258,6 @@ $('.scribblePad').click(function(e){
 		else if(penIsDown){
 			mouse2X = e.pageX - this.offsetLeft;
 			mouse2Y = e.pageY - this.offsetTop;
-			//snapping to nearest points if any
-			if(curSnap != 'none'){
-				mouse2X = curSnap[0];
-				mouse2Y = curSnap[1];
-			}
 			
 			penIsDown = false;
 			//console.log(mouse2X+", "+mouse2Y);
@@ -397,18 +265,14 @@ $('.scribblePad').click(function(e){
 			c1.beginPath();
 			c1.moveTo(mouse1X,mouse1Y);
 			c1.lineTo(mouse2X,mouse2Y);
-			lines.push(new Array(mouse1X,mouse1Y,mouse2X,mouse2Y));
 			
 			updatePen();
 			c1.stroke();
 			helpText.text('Pick the starting point');
 			
-			addVertex(mouse1X,mouse1Y);
-			addVertex(mouse2X,mouse2Y);
-			
 			var lineObj = {type : "line", startPt : new Array(mouse1X,mouse1Y), endPt : new Array(mouse2X,mouse2Y),
 							strokeColor: c1.strokeStyle, strokeWidth: c1.lineWidth};
-			pingData(lineObj);
+			addObject(lineObj);
 		}
 		}
 		//with the chain option checked
@@ -416,11 +280,6 @@ $('.scribblePad').click(function(e){
 		if(!penIsDown){
 			mouse1X = e.pageX - this.offsetLeft;
 			mouse1Y = e.pageY - this.offsetTop;
-			//snapping to nearest points if any
-			if(curSnap != 'none'){
-				mouse1X = curSnap[0];
-				mouse1Y = curSnap[1];
-			}
 			
 			penIsDown = true;
 			helpText.text('Continue picking points. Hit Esc to stop drawing');
@@ -429,28 +288,18 @@ $('.scribblePad').click(function(e){
 		else if(penIsDown){
 			mouse2X = e.pageX - this.offsetLeft;
 			mouse2Y = e.pageY - this.offsetTop;
-			//snapping to nearest points if any
-			if(curSnap != 'none'){
-				mouse2X = curSnap[0];
-				mouse2Y = curSnap[1];
-			}
 			
 			c1.beginPath();
 			c1.moveTo(mouse1X,mouse1Y);
 			c1.lineTo(mouse2X,mouse2Y);
-			lines.push(new Array(mouse1X,mouse1Y,mouse2X,mouse2Y));
 			
 			updatePen();
 			c1.stroke();
 			
-			addVertex(mouse1X,mouse1Y);
-			addVertex(mouse2X,mouse2Y);
-			
 			var lineObj = {type : "line", startPt : new Array(mouse1X,mouse1Y), endPt : new Array(mouse2X,mouse2Y),
 							strokeColor: c1.strokeStyle, strokeWidth: c1.lineWidth};
 			mouse1X = mouse2X; mouse1Y = mouse2Y;
-			
-			pingData(lineObj);
+			addObject(lineObj);
 		}
 		}
 	}
@@ -458,11 +307,6 @@ $('.scribblePad').click(function(e){
 		if(!penIsDown){
 			mouse1X = e.pageX - this.offsetLeft;
 			mouse1Y = e.pageY - this.offsetTop;
-			//snapping to nearest points if any
-			if(curSnap != 'none'){
-				mouse1X = curSnap[0];
-				mouse1Y = curSnap[1];
-			}
 			
 			//console.log(mouse1X+", "+mouse1Y);
 			penIsDown = true;
@@ -471,11 +315,6 @@ $('.scribblePad').click(function(e){
 		else if(penIsDown){
 			mouse2X = e.pageX - this.offsetLeft;
 			mouse2Y = e.pageY - this.offsetTop;
-			//snapping to nearest points if any
-			if(curSnap != 'none'){
-				mouse2X = curSnap[0];
-				mouse2Y = curSnap[1];
-			}
 			
 			penIsDown = false;
 			
@@ -486,18 +325,13 @@ $('.scribblePad').click(function(e){
 			}
 			c1.strokeRect(mouse1X,mouse1Y,mouse2X-mouse1X,mouse2Y-mouse1Y);
 			
-			addVertex(mouse1X,mouse1Y);
-			addVertex(mouse2X,mouse2Y);
-			addVertex(mouse1X,mouse2Y);
-			addVertex(mouse2X,mouse1Y);
-			
 			helpText.text('Pick first corner of the rectangle');
 			//pushing the corner coordinates to the array - last element is a bool whether the rectangle should be filled or not.
 			
 			var recObj = {type: "rectangle", vert1: new Array(mouse1X,mouse1Y), vert2: new Array(mouse2X,mouse2Y), 
 							tobeFilled: fillCheckbox.checked, fillColor: c1.fillStyle, strokeColor: c1.strokeStyle,
 							strokeWidth: c1.lineWidth};
-			pingData(recObj);
+			addObject(recObj);
 		}
 		
 	}
@@ -505,22 +339,12 @@ $('.scribblePad').click(function(e){
 		if(!penIsDown){
 			mouse1X = e.pageX - this.offsetLeft;
 			mouse1Y = e.pageY - this.offsetTop;
-			//snapping to nearest points if any
-			if(curSnap != 'none'){
-				mouse1X = curSnap[0];
-				mouse1Y = curSnap[1];
-			}
-			//console.log(mouse1X+", "+mouse1Y);
+
 			penIsDown = true;
 			helpText.text('Finish drawing the polygon');
 		}else{
 			mouse2X = e.pageX - this.offsetLeft;
 			mouse2Y = e.pageY - this.offsetTop;
-			//snapping to nearest points if any
-			if(curSnap != 'none'){
-				mouse2X = curSnap[0];
-				mouse2Y = curSnap[1];
-			}
 			
 			polygonVert = [];
 			polygonVert.push([mouse2X,mouse2Y]);
@@ -545,26 +369,17 @@ $('.scribblePad').click(function(e){
 			if(fillCheckbox.checked){c1.fill();}
 			c1.stroke();
 			
-			for(var x = 0; x < polygonVert.length; x++){
-				addVertex(polygonVert[x][0], polygonVert[x][1]);
-			}
-			
 			var polygonObj = {type: 'polygon', vertAr: polygonVert, strokeColor: c1.strokeStyle, fillColor: c1.fillStyle, toBeFilled: fillCheckbox.checked, strokeWidth: c1.lineWidth};
 			penIsDown = false;
 			helpText.text('Pick the center of the polygon');
 			clearTempCanvases();
-			pingData(polygonObj);
+			addObject(polygonObj);
 		}
 	}
 	else if(currentTool == "circle"){
 		if(!centerSelected){
 			centerX = e.pageX - this.offsetLeft;
 			centerY = e.pageY - this.offsetTop;
-			//snapping to nearest points if any
-			if(curSnap != 'none'){
-				centerX = curSnap[0];
-				centerY = curSnap[1];
-			}
 			
 			centerSelected = true;
 			helpText.text('Pick the starting point of the arc/circle');
@@ -574,11 +389,6 @@ $('.scribblePad').click(function(e){
 			if(!penIsDown){
 				mouse1X = e.pageX - this.offsetLeft;
 				mouse1Y = e.pageY - this.offsetTop;
-				//snapping to nearest points if any
-				if(curSnap != 'none'){
-					mouse1X = curSnap[0];
-					mouse1Y = curSnap[1];
-				}
 				
 				penIsDown = true;
 				
@@ -589,11 +399,6 @@ $('.scribblePad').click(function(e){
 			else if(penIsDown){
 				mouse2X = e.pageX - this.offsetLeft;
 				mouse2Y = e.pageY - this.offsetTop;
-				//snapping to nearest points if any
-				if(curSnap != 'none'){
-					mouse2X = curSnap[0];
-					mouse2Y = curSnap[1];
-				}
 				
 				penIsDown = false;
 				centerSelected = false;
@@ -611,27 +416,20 @@ $('.scribblePad').click(function(e){
 				c1.beginPath();
 				if(reverseCheckbox.checked){
 					c1.arc(centerX,centerY,radius,startAngle,stopAngle);
-					circles.push(new Array(centerX,centerY,radius,startAngle,stopAngle));
-					
 					cirObj = {type: "circle", center: new Array(centerX, centerY), rad: radius, Ang1: startAngle, 
 									Ang2: stopAngle, vert1: new Array(mouse1X, mouse1Y), vert2: othPt, strokeColor: c1.strokeStyle,
 									strokeWidth: c1.lineWidth};
 				}else{
 					c1.arc(centerX,centerY,radius,stopAngle,startAngle);//console.log('here');
-					circles.push(new Array(centerX,centerY,radius,stopAngle,startAngle));
 					
 					cirObj = {type: "circle", center: new Array(centerX, centerY), rad: radius, Ang1: stopAngle, 
 									Ang2: startAngle, vert1: new Array(mouse1X, mouse1Y), vert2: othPt, strokeColor: c1.strokeStyle,
 									strokeWidth: c1.lineWidth};
 				}
 				
-				//addVertex(centerX, centerY);//decide later whether to add the center or not
-				addVertex(mouse1X, mouse1Y);
-				addVertex(othPt[0], othPt[1]);
-				
 				c1.stroke();
 				helpText.text('Select the centre of the arc/circle');
-				pingData(cirObj);
+				addObject(cirObj);
 			}
 		}
 	}
@@ -641,21 +439,12 @@ $('.scribblePad').click(function(e){
 				mouse1X = e.pageX - this.offsetLeft;
 				mouse1Y = e.pageY - this.offsetTop;
 				
-				if(curSnap != 'none'){
-					mouse1X = curSnap[0];
-					mouse1Y = curSnap[1];
-				}
-				
 				curveStarted = true;
 				helpText.text('Select the Ending point of the axis');
 			}else{
 				mouse_ix = e.pageX - this.offsetLeft;
 				mouse_iy = e.pageY - this.offsetTop;
-				
-				if(curSnap != 'none'){
-					mouse_ix = curSnap[0];
-					mouse_iy = curSnap[1];
-				}
+
 				//console.log(mouse1X,mouse1Y,mouse_ix,mouse_iy);
 				axisAngle = lineAngle(mouse1X,mouse1Y,mouse_ix,mouse_iy);//console.log(axisAngle);
 				axisLength = dist(mouse1X,mouse1Y,mouse_ix,mouse_iy);
@@ -676,11 +465,6 @@ $('.scribblePad').click(function(e){
 				mouse2X = e.pageX - this.offsetLeft;
 				mouse2Y = e.pageY - this.offsetTop;
 				
-				if(curSnap != 'none'){
-					mouse2X = curSnap[0];
-					mouse2Y = curSnap[1];
-				}
-				
 				var minAxis = lineDist([mouse1X,mouse1Y],[mouse_ix,mouse_iy],[mouse2X,mouse2Y]);
 				scaleFactor = 2*mod(minAxis)/axisLength;
 				c1.scale(1,scaleFactor);
@@ -693,22 +477,17 @@ $('.scribblePad').click(function(e){
 				if(fillCheckbox.checked){c1.fill();}
 				c1.stroke();
 				c1.restore();
-				//adding vertices for snapping
+				//sending the data over to the server
 				var ellipseCenter = [(mouse1X+mouse_ix)/2, (mouse1Y+mouse_iy)/2];
 				var end1 = vSum(ellipseCenter,minAxis);
 				var end2 = vDiff(ellipseCenter,minAxis);
-				addVertex(mouse1X,mouse1Y);
-				addVertex(mouse_ix,mouse_iy);
-				addVertex(end1[0],end1[1]);
-				addVertex(end2[0],end2[1]);
-				//sending the data over to the server
 				var ellObj = {type: 'ellipse', vert1: [mouse1X,mouse1Y], vert2: [mouse_ix,mouse_iy], endPt: [mouse2X,mouse2Y],
 								vert3: end1, vert4: end2, tobeFilled: fillCheckbox.checked, strokeColor:c1.strokeStyle,
 								strokeWidth: c1.lineWidth,fillColor: c1.fillStyle};
 				penIsDown = false;
 				curveStarted = false;
 				helpText.text('Select the starting point of the first axis');
-				pingData(ellObj);
+				addObject(ellObj);
 			}
 		}
 	}
@@ -739,7 +518,7 @@ $('.scribblePad').click(function(e){
 			var frObj = {type: "freehand", points: freeHand, strokeColor: c1.strokeStyle, strokeWidth: c1.lineWidth}
 			
 			helpText.text('Click to start drawing free hand');
-			pingData(frObj);
+			addObject(frObj);
 		}
 	}
 	else if(currentTool == "curve"){
@@ -747,12 +526,7 @@ $('.scribblePad').click(function(e){
 			penIsDown = true;//console.log('penIsDown = '+penIsDown);
 			mouse1X = e.pageX - this.offsetLeft;
 			mouse1Y = e.pageY - this.offsetTop;
-			//snapping to nearest points if any
-			if(curSnap != 'none'){
-				mouse1X = curSnap[0];
-				mouse1Y = curSnap[1];
-			}
-			
+
 			helpText.text('continue selecting control points or hit Esc to stop');
 		}
 		else if(penIsDown){
@@ -760,30 +534,16 @@ $('.scribblePad').click(function(e){
 				curveStarted = true;
 				mouse_ix = e.pageX - this.offsetLeft;
 				mouse_iy = e.pageY - this.offsetTop;
-				//snapping to nearest points if any
-				if(curSnap != 'none'){
-					mouse_ix = curSnap[0];
-					mouse_iy = curSnap[1];
-				}	
 			}
 			else if(curveStarted){
 				mouse2X = e.pageX - this.offsetLeft;
 				mouse2Y = e.pageY - this.offsetTop;
-				//snapping to nearest points if any
-				if(curSnap != 'none'){
-					mouse2X = curSnap[0];
-					mouse2Y = curSnap[1];
-				}
 				
 				updatePen();
 				c1.beginPath();
 				c1.moveTo(mouse1X,mouse1Y);
 				c1.quadraticCurveTo(mouse_ix,mouse_iy,(mouse_ix+mouse2X)/2,(mouse_iy+mouse2Y)/2);
 				c1.stroke();
-				curves.push(new Array(mouse1X,mouse1Y,mouse_ix,mouse_iy,(mouse_ix+mouse2X)/2,(mouse_iy+mouse2Y)/2));
-				
-				addVertex(mouse1X,mouse1Y);
-				addVertex((mouse_ix+mouse2X)/2,(mouse_iy+mouse2Y)/2);
 				
 				var curObj = {type: "curve", startPt: new Array(mouse1X, mouse1Y), intPt: new Array(mouse_ix,mouse_iy),
 								endPt: new Array((mouse_ix+mouse2X)/2,(mouse_iy+mouse2Y)/2), strokeColor: c1.strokeStyle,
@@ -793,7 +553,7 @@ $('.scribblePad').click(function(e){
 				mouse1X = (mouse_ix+mouse2X)/2;mouse1Y = (mouse_iy+mouse2Y)/2;
 				mouse_ix = mouse2X;mouse_iy = mouse2Y;
 				
-				pingData(curObj);
+				addObject(curObj);
 			}
 		}
 	}
@@ -805,7 +565,7 @@ $('.scribblePad').click(function(e){
 		floodFill(startX, startY, c1);
 		
 		var floodObj = {type: "flood", floodPt: new Array(startX,startY), floodColor: c1.fillStyle};
-		pingData(floodObj);
+		addObject(floodObj);
 	}
 	else if(currentTool == "eraser"){
 		if(!penIsDown){
@@ -821,23 +581,12 @@ $('.scribblePad').click(function(e){
 			penIsDown = false;
 			c1.beginPath();
 			c1.clearRect(mouse1X,mouse1Y,mouse2X-mouse1X,mouse2Y-mouse1Y);
-			//deleting snapVertives if any
-			for(var i=0; i<snapVertices.length; i++){
-				if((snapVertices[i][0]>mouse1X && snapVertices[i][0]<mouse2X)||
-					(snapVertices[i][0]>mouse2X && snapVertices[i][0]<mouse1X)){
-						if((snapVertices[i][1]>mouse1Y && snapVertices[i][1]<mouse2Y)||
-							(snapVertices[i][1]>mouse2Y && snapVertices[i][1]<mouse1Y)){
-								snapVertices.splice(i,1);
-								i--;
-							}
-					}
-			}
 			
 			helpText.text('Pick first corner of the area to be cleared');
 			//pushing the corner coordinates to the array - last element is a bool whether the rectangle should be filled or not.
 			
 			var erObj = {type: "erase", vert1: new Array(mouse1X,mouse1Y), vert2: new Array(mouse2X,mouse2Y)};
-			pingData(erObj);
+			addObject(erObj);
 		}
 		
 	}
@@ -871,13 +620,16 @@ $('.scribblePad').click(function(e){
 			c3.clearRect(0,0,canvas1.width,canvas1.height);
 			
 			c1.drawImage(imageUploaded,mouse1X,mouse1Y,mouse2X-mouse1X,(mouse2X-mouse1X)*aspectRatio);
+			// var testImg = new Image();
+			// testImg.src = encImg;
+			// c1.drawImage(testImg,0,0,canvas1.width, canvas1.height);
 		
 			penIsDown = false;//console.log(penIsDown);
 			//$('#imageUploaded').remove();removing the image division which was hidden
 			//imgUpload.replaceWith( imgUpload = imgUpload.clone( true ) );//resetting the input file element
 			//imageIsLoaded = false;
-			helpText.text('Choose an image file to upload and draw');
-			pingData(imgObj);
+			helpText.text('Choose an image file to upload and draw');			
+			addObject(imgObj);
 		}
 	}
 	else if(currentTool == "text"){
@@ -893,7 +645,7 @@ $('.scribblePad').click(function(e){
 			c1.fillText(txt,mouse1X,mouse1Y);
 			
 			var txtObj = {type: "text", font: c1.font, value: txt, basePt : new Array(mouse1X, mouse1Y), txtColor: c1.fillStyle};
-			pingData(txtObj);
+			addObject(txtObj);
 		}
 	}
 	else if(currentTool == "none"){
@@ -930,11 +682,7 @@ $('.scribblePad').mousemove(function(e){
 		if(penIsDown){
 			mouse2X = e.pageX - this.offsetLeft;
 			mouse2Y = e.pageY - this.offsetTop;
-			//snapping to nearest points if any
-			if(curSnap != 'none'){
-				mouse2X = curSnap[0];
-				mouse2Y = curSnap[1];
-			}
+
 			c2.beginPath();
 			c2.moveTo(mouse1X,mouse1Y);
 			c2.lineTo(mouse2X,mouse2Y);
@@ -1075,10 +823,8 @@ $('.scribblePad').mousemove(function(e){
 	}
 	else if(currentTool == "floodFill"){
 		clearTempCanvases();
-		curSnap = 'none';
 	}
 	else if(currentTool == "eraser"){
-		curSnap = 'none';
 		if(penIsDown){
 			clearTempCanvases()
 			mouse2X = e.pageX - this.offsetLeft;
@@ -1094,8 +840,9 @@ $('.scribblePad').mousemove(function(e){
 			
 			mouse2X = e.pageX - this.offsetLeft;
 			mouse2Y = e.pageY - this.offsetTop;
-			
+			// console.log('drawing on c2');
 			c2.drawImage(imageUploaded,mouse1X,mouse1Y,mouse2X-mouse1X,(mouse2X-mouse1X)*aspectRatio);
+			//c2.strokeRect(mouse1X,mouse1Y,mouse2X-mouse1X,(mouse2X-mouse1X)*aspectRatio);
 		}
 		else if(!penIsDown){
 			clearTempCanvases()
@@ -1111,17 +858,6 @@ $('.scribblePad').mousemove(function(e){
 		if(txt != ""){
 			c2.font = txtSize+"px Arial";
 			c2.fillText(txt, mouse1X, mouse1Y);
-		}
-	}
-	
-	if(currentTool != 'floodFill' && currentTool != 'eraser' && currentTool != 'text' && currentTool != 'freehand' &&
-		currentTool != 'none'){
-		if(vSnapCheckBox.checked){
-			//clearTempCanvases()
-			mouseX = e.pageX - this.offsetLeft;
-			mouseY = e.pageY - this.offsetTop;
-			//updating the nearest snapping point if any
-			curSnap = isSnappingTo([mouseX, mouseY], true);
 		}
 	}
 });
@@ -1143,59 +879,18 @@ function press_btn(e){
 		clearTempCanvases()
 		loadTool();
 	}
-	cleanArray(snapVertices);
 }
 	
 $('#clear_btn').click(function(){
 	clearTempCanvases()
 	c1.clearRect(0,0,canvas1.width,canvas1.height);
-	snapVertices = [];
 	penIsDown = false;
 });
 
 function renderShapes(){
-	//drawing lines
-	for(var line=0;line<lines.length;line++){
-		c1.beginPath();
-		c1.moveTo(lines[line][0],lines[line][1]);
-		c1.lineTo(lines[line][2],lines[line][3]);
-		c1.stroke();
+	for(var i = 0; i < drawList.length; i++){
+		renderObject(drawList[i],c1);
 	}
-	//drawing rectangles
-	for(var rect= 0; rect<rectangles.length;rect++){
-		c1.beginPath();
-		c1.strokeRect(rectangles[rect][0],rectangles[rect][1],rectangles[rect][2]-rectangles[rect][0],rectangles[rect][3]-rectangles[rect][1]);
-		if(rectangles[rect][4]==true){
-		c1.fillRect(rectangles[rect][0],rectangles[rect][1],rectangles[rect][2]-rectangles[rect][0],rectangles[rect][3]-rectangles[rect][1]);
-		}
-	}
-	//drawing circles and arcs
-	for(var cir = 0; cir<circles.length; cir++){
-		c1.beginPath();
-		c1.arc(circles[cir][0],circles[cir][1],circles[cir][2],circles[cir][3],circles[cir][4]);
-		c1.stroke();
-	}
-	//drawing free hand strokes
-	//alert((freeHand.length*3)+" values recorded");
-	for(var free = 0;free<freeHand.length-1;free++){
-		if(freeHand[free][2]){
-			c1.beginPath();
-			c1.moveTo(freeHand[free][0],freeHand[free][1]);
-			c1.lineTo(freeHand[free+1][0],freeHand[free+1][1]);
-			c1.stroke();
-		}
-	}
-	//drawing curves
-	for(var cur = 0;cur<curves.length;cur++){
-		c1.beginPath();
-		c1.moveTo(curves[cur][0],curves[cur][1]);
-		c1.quadraticCurveTo(curves[cur][2],curves[cur][3],curves[cur][4],curves[cur][5]);
-		c1.stroke();
-		//console.log(curves[cur][2]+" "+curves[cur][3]);
-	}
-	//lines.splice(0,lines.length);
-	//rectangles.splice(0,rectangles.length);//these lines clear or delete all the elements from the arrays
-	console.log(lines.length*2+rectangles.length*3+circles.length*5+freeHand.length*2+curves.length*6);
 }
 
 $('#render_btn').click(function(){renderShapes()});
@@ -1357,14 +1052,6 @@ function saveImage(){
 }
 $('#save_btn').click(function(){saveImage();});
 
-function loadCurrentState(currentState){//the parameter objectis the current received from the server
-	var snapShot = new Image();
-	snapShot.src = currentState.snapShot;
-	c1.drawImage(snapShot,0,0,canvas1.width,canvas1.height);
-	snapVertices = currentState.snapPoints;
-}
-
-function getCurrentState(){//sends the current state of the canvas packed into an object
-	return {snapShot: canvas1.toDataURL(), snapPoints: snapVertices};
-	//add code here send the above object to the server
+function addObject(obj){
+	sketch.push(obj);
 }
