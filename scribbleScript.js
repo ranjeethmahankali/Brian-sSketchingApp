@@ -895,8 +895,8 @@ function renderShapes(){
 
 $('#render_btn').click(function(){renderShapes()});
 
-function loadTool(){
-	currentTool = $('input[name=tool]:checked').val();
+function loadTool(toolName){
+	currentTool = toolName;
 	if(currentTool=="line"){
 		$('#chain_box').show();
 		$('#fill_box').hide();
