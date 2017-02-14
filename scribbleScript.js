@@ -1055,3 +1055,18 @@ $('#save_btn').click(function(){saveImage();});
 function addObject(obj){
 	sketch.push(obj);
 }
+
+function uniqueID(){
+	//return a unique ID every time
+}
+
+function saveSketch(skName, username, dateCreated, parentID){
+	sketchObj = {name:skName, 
+					objects:sketch, 
+					author:username, 
+					date:dateCreated, 
+					uid: uuid.v1(),
+					parent: parentID, 
+					child:new Array()};
+	//code to save the above object somewhere
+}
