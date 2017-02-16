@@ -4,6 +4,7 @@
 <title>Scribble Pad</title>
 <head>
 	<link type="text/css" href = "scribbleStyleSheet.css" rel = "stylesheet"></link>
+    <script src = "http://wzrd.in/standalone/uuid@latest"></script>
 </head>
 
 <body>
@@ -15,20 +16,20 @@
         <br />
         <div id = "tool_box">
             <div id = "tool_list">
-				<input type="radio" name="tool" value="line" onchange="loadTool()" />Line<br />
-				<input type="radio" name="tool" value="rectangle" onchange="loadTool()" />Rectangle<br />
-				<input type="radio" name="tool" value="polygon" onchange="loadTool()" />Polygon<br />
-                <input type="radio" name="tool" value="circle" onchange="loadTool()" />Arc<br />
-                <input type="radio" name="tool" value="ellipse" onchange="loadTool()" />Ellipse<br />
-                <input type="radio" name="tool" value="freehand" onchange="loadTool()" />Free Hand<br />
-                <input type="radio" name="tool" value="curve" onchange="loadTool()" />Curve<br />
-                <input type="radio" name="tool" value="floodFill" onchange="loadTool()" />Flood fill<br />
-                <input type="radio" name="tool" value="eraser" onchange="loadTool()" />Eraser<br />
-                <input type="radio" name="tool" value="image" onchange="loadTool()" />Image<br />
-                <input type="radio" name="tool" value="text" onchange="loadTool()" />Text<br />
+				<input type="radio" name="tool" value="line" onchange="loadTool('line')" />Line<br />
+				<input type="radio" name="tool" value="rectangle" onchange="loadTool('rectangle')" />Rectangle<br />
+				<input type="radio" name="tool" value="polygon" onchange="loadTool('polygon')" />Polygon<br />
+                <input type="radio" name="tool" value="circle" onchange="loadTool('circle')" />Arc<br />
+                <input type="radio" name="tool" value="ellipse" onchange="loadTool('ellipse')" />Ellipse<br />
+                <input type="radio" name="tool" value="freehand" onchange="loadTool('freehand')" />Free Hand<br />
+                <input type="radio" name="tool" value="curve" onchange="loadTool('curve')" />Curve<br />
+                <input type="radio" name="tool" value="floodFill" onchange="loadTool('floodFill')" />Flood fill<br />
+                <input type="radio" name="tool" value="eraser" onchange="loadTool('eraser')" />Eraser<br />
+                <input type="radio" name="tool" value="image" onchange="loadTool('image')" />Image<br />
+                <input type="radio" name="tool" value="text" onchange="loadTool('text')" />Text<br />
             </div>
             <button id = "clear_btn">Clear Canvas</button>
-            <!--button id = "render_btn">Render</button-->
+            <button id = "render_btn">Render</button><br />
             <button id = "save_btn">Save Image</button>
             <br />
             <div id="vSnapBox" class="tool"><input type = "checkbox" name = "vSnap" checked id = "vSnapCheckBox"/>Snap to Vertices</div>

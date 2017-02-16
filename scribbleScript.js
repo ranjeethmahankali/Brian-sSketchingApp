@@ -54,7 +54,21 @@ var axisLength;
 var scaleFactor = 1;
 //variables for ellipse tool</>
 
-var sketch = new Array();
+curSketch = newSketch();
+
+function newSketch(){
+	newSketch = {name:'None', 
+				objects:new Array(),
+				tempObj: new Array(),
+				author:'None', 
+				date:'None', 
+				uid: uuid.v1(),
+				parent: 'None',
+				child:new Array()
+			};
+	
+	return newSketch;
+}
 
 function cleanArray(ar){//cleans up a 2d array by deleting any duplicated elements
 	for (var i = 0; i < ar.length; i++){
@@ -887,13 +901,13 @@ $('#clear_btn').click(function(){
 	penIsDown = false;
 });
 
-function renderShapes(){
-	for(var i = 0; i < drawList.length; i++){
-		renderObject(drawList[i],c1);
+function renderSketch(sketch){
+	for(var i = 0; i < sketch.objects.length; i++){
+		renderObject(sketch.objects[i],c1);
 	}
 }
 
-$('#render_btn').click(function(){renderShapes()});
+$('#render_btn').click(function(){renderSketch(curSketch)});
 
 function loadTool(toolName){
 	currentTool = toolName;
@@ -1053,20 +1067,18 @@ function saveImage(){
 $('#save_btn').click(function(){saveImage();});
 
 function addObject(obj){
-	sketch.push(obj);
+	curSketch.tempObj.push(obj);
 }
 
 function uniqueID(){
 	//return a unique ID every time
 }
 
-function saveSketch(skName, username, dateCreated, parentID){
-	sketchObj = {name:skName, 
-					objects:sketch, 
-					author:username, 
-					date:dateCreated, 
-					uid: uuid.v1(),
-					parent: parentID, 
-					child:new Array()};
+function saveSketch(){
 	//code to save the above object somewhere
+	var sk =  cloneObject(curSketch);
+	sk.objects = sk.objects.concat(sk.tempObj);
+	sk.tempObj = new Array();
+	
+	return sk;
 }
