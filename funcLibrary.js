@@ -192,6 +192,7 @@ function roundNum(num,dec){//rounds off number num to dec decimals
 	return newNum;
 }
 
+//this function adds two colors
 function addColors(r1,g1,b1,a1,r2,g2,b2,a2){//adds these two colors and returs [r,g,b,a]
 	var a = a1 + a2*(1-a1);
 	var r = (r1*a1 + r2*a2*(1-a1))/a;
@@ -199,4 +200,18 @@ function addColors(r1,g1,b1,a1,r2,g2,b2,a2){//adds these two colors and returs [
 	var b = (b1*a1 + b2*a2*(1-a1))/a;
 	
 	return [r,g,b,a];
+}
+
+//a recursive parameter to clone an object
+function cloneObject(obj) {
+    if (obj === null || typeof obj !== 'object') {
+        return obj;
+    }
+ 
+    var temp = obj.constructor(); // give temp the original obj's constructor
+    for (var key in obj) {
+        temp[key] = cloneObject(obj[key]);
+    }
+ 
+    return temp;
 }
