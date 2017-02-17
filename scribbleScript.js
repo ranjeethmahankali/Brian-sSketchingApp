@@ -56,15 +56,19 @@ var scaleFactor = 1;
 
 curSketch = newSketch();
 
-function newSketch(){
-	newSketch = {name:'None', 
-				objects:new Array(),
-				tempObj: new Array(),
-				author:'None', 
-				date:'None', 
-				uid: uuid.v1(),
-				parent: 'None',
-				child:new Array()
+function newSketch(parentID, authorName, dateStamp){
+	if(parentID === undefined){parentID = 'None';}
+	if(authorName === undefined){authorName = 'None';}
+	if(dateStamp === undefined){dateStamp = new Date();}
+
+	var newSketch = {'name':'None', 
+				'objects':new Array(),
+				'tempObj': new Array(),
+				'author':'None', 
+				'date':dateStamp, 
+				'uid': uuid.v1(),
+				'parent': 'None',
+				'child':new Array()
 			};
 	
 	return newSketch;
@@ -1064,14 +1068,18 @@ function saveImage(){
 	//alert('yo');
 	//console.log(dataURL);
 }
-$('#save_btn').click(function(){saveImage();});
+$('#save_btn').click(function(){saveSketch();});
 
 function addObject(obj){
 	curSketch.tempObj.push(obj);
 }
 
-function uniqueID(){
-	//return a unique ID every time
+function getNewName(defaultName){
+	newName = prompt('Give a name to this sketch (max 20 characters)');
+	while(newName.length > 20 || newName == defaultName){
+		newName = prompt('Name is either too long or repeated, try again(max 20 characters)');
+	}
+	return newName;
 }
 
 function saveSketch(){
@@ -1079,6 +1087,36 @@ function saveSketch(){
 	var sk =  cloneObject(curSketch);
 	sk.objects = sk.objects.concat(sk.tempObj);
 	sk.tempObj = new Array();
+	sk.name = getNewName(sk.name);
 	
-	return sk;
+	strSketch = JSON.stringify(sk);
+	
+	$.post("actions.php",
+    {
+        action: "save",
+        sketch: strSketch
+    },
+    function(data, status){
+		helpText.html(data);
+    });
+}
+
+function loadSketch(sketchID){
+	skObj = 'None';
+
+	$.post("actions.php",
+    {
+        action: "load",
+        sketch_id: sketchID
+    },
+    function(data, status){
+		//console.log(data);
+		skObj = JSON.parse(data);
+		skObj.parent = skObj.uid;
+		skObj.uid  = uuid.v1();
+		skObj.name = getNewName(skObj.name);
+		renderSketch(skObj);
+    });
+
+	return skObj;
 }
