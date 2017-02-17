@@ -59,4 +59,16 @@ function getRoot($sketch){
         return getRoot($parentSketch);
     }
 }
+
+//this returns the list of sketch ids starting from root travelling down to the $sketch
+//this should be useful to display the tree for the user
+function getTreeList($sketch, $treeList = array()){
+    array_push($treeList, $sketch['uid']);
+    if($sketch['parent'] == 'None'){
+        return array_reverse($treeList);
+    }else{
+        $parent = getSketchObject($sketch['parent']);
+        return getTreeList($parent, $treeList);
+    }
+}
 ?>

@@ -903,11 +903,10 @@ function resetApp(){
 	clearTempCanvases()
 	c1.clearRect(0,0,canvas1.width,canvas1.height);
 	penIsDown = false;
-}
 
-$('#clear_btn').click(function(){
-	resetApp();
-});
+	curSketch = newSketch();
+}
+$('#clear_btn').click(function(){resetApp();});
 
 function renderSketch(sketch){
 	for(var i = 0; i < sketch.objects.length; i++){
@@ -1078,10 +1077,10 @@ function addObject(obj){
 	curSketch.tempObj.push(obj);
 }
 
-function getNewName(defaultName){
+function getNewName(){
 	newName = prompt('Give a name to this sketch (max 20 characters)');
-	while(newName.length > 20 || newName == defaultName){
-		newName = prompt('Name is either too long or repeated, try again(max 20 characters)');
+	while(newName.length > 20){
+		newName = prompt('Name is either too long, try again(max 20 characters)');
 	}
 	return newName;
 }
@@ -1091,7 +1090,7 @@ function saveSketch(){
 	var sk =  cloneObject(curSketch);
 	sk.objects = sk.objects.concat(sk.tempObj);
 	sk.tempObj = new Array();
-	sk.name = getNewName(sk.name);
+	if(!sk.name){sk.name = getNewName();}
 	
 	strSketch = JSON.stringify(sk);
 	
@@ -1104,7 +1103,7 @@ function saveSketch(){
 		var data_packet = null;
 		try{
 			data_packet = JSON.parse(data);
-			helpText.html(data_packet.message + data_packet.sketch_name);
+			helpText.html(data_packet.message + '"'+data_packet.sketch_name+'"');
 
 			//now printing debug messages if any
 			console.log(data_packet.debug);
@@ -1132,7 +1131,7 @@ function loadSketch(sketchID){
 			//loading the sketch itself into the document
 			skObj.parent = skObj.uid;
 			skObj.uid  = uuid.v1();
-			skObj.name = getNewName(skObj.name);
+			skObj.name = null;
 			//clearing any prevous sketches
 			resetApp();
 			renderSketch(skObj);

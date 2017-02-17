@@ -15,6 +15,7 @@ function newDataPacket(){
     return $data_packet;
 }
 
+//This function adds the 
 function addToRoots($skObj){
     if(!in_array($skObj['uid'], $GLOBALS['root_ids'])){
         array_push($GLOBALS['root_ids'], $skObj['uid']);
@@ -22,6 +23,17 @@ function addToRoots($skObj){
     }
 }
 
+//this function adds the $child_id to the child list of the parent
+function addChild($parent_id, $child_id){
+    $parent = getSketchObject($parent_id);
+    if(!in_array($child_id, $parent['child'])){
+        array_push($parent['child'], $child_id);
+    }
+
+    saveToFile($parent, $GLOBALS['sketch_dir']);
+}
+
+//this saves the sketch object in the relative path - $directory
 function saveToFile($sketch, $directory){
     $path = $directory.$sketch['uid'].'.json';
     $fp = fopen($path, 'w');
@@ -32,16 +44,19 @@ function saveToFile($sketch, $directory){
         addToRoots($sketch);
     }else{
         //add this to the child list of the parent sketch - pending
+        addChild($sketch['parent'], $sketch['uid']);
     }
 
     return $path;
 }
 
+//this reads the file in filepath and returns the json as a string
 function getJsonStr($filePath){
     $json_str = file_get_contents($filePath);
     return $json_str;
 }
 
+//main logic
 $self_path = $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 $path  = pathinfo($self_path);
 $app_file = 'scribble_old.html';
