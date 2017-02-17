@@ -3,9 +3,23 @@
 include 'common.php';
 initialize_roots();
 
+// print_r($root_ids);
+//this is the data packet that will be sent to the client
+function newDataPacket(){
+    $data_packet = array("sketch"=>"",
+                        "sketch_name"=>"",
+                        "debug"=>"",
+                        "message"=>"",
+                        "data"=>"",
+                        );
+    return $data_packet;
+}
+
 function addToRoots($skObj){
-    array_push($GLOBALS['root_ids'], $skObj['uid']);
-    update_roots($GLOBALS['root_ids']);
+    if(!in_array($skObj['uid'], $GLOBALS['root_ids'])){
+        array_push($GLOBALS['root_ids'], $skObj['uid']);
+        update_roots($GLOBALS['root_ids']);
+    }
 }
 
 function saveToFile($sketch, $directory){
@@ -16,6 +30,8 @@ function saveToFile($sketch, $directory){
 
     if($sketch['parent'] == 'None'){
         addToRoots($sketch);
+    }else{
+        //add this to the child list of the parent sketch - pending
     }
 
     return $path;
@@ -36,10 +52,23 @@ if(isset($_POST['action']) && $_SERVER['HTTP_REFERER'] == $app_path){
         //second param true does any needed conversions on input objects
         $sketch = json_decode($_POST['sketch'], true);
         $save_path = saveToFile($sketch, $sketch_dir);
-        echo "File succesfully saved !";
+        //building the data_packet to send
+        $data_packet = newDataPacket();
+        $data_packet['message'] = "succesfully saved ";
+        $data_packet['sketch_name'] = $sketch['name'];
+        echo json_encode($data_packet);
     }elseif($_POST['action'] == 'load'){
         $filePath = $sketch_dir.$_POST['sketch_id'].'.json';
-        echo getJsonStr($filePath);
+        $sketch_obj = getSketchObject($_POST['sketch_id']);
+
+        //building the data packet to send
+        $data_packet = newDataPacket();
+        $data_packet['sketch_name'] = $sketch_obj['name'];
+        $data_packet['message'] = 'Succesfully loaded ';
+        $data_packet['sketch'] = getJsonStr($filePath);
+        //adding debug message if needed
+        $data_packet['debug'] = json_encode($GLOBALS['root_ids']);
+        echo json_encode($data_packet);
     }
 }
 ?>

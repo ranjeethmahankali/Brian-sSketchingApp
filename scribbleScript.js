@@ -898,11 +898,15 @@ function press_btn(e){
 		loadTool();
 	}
 }
-	
-$('#clear_btn').click(function(){
+
+function resetApp(){
 	clearTempCanvases()
 	c1.clearRect(0,0,canvas1.width,canvas1.height);
 	penIsDown = false;
+}
+
+$('#clear_btn').click(function(){
+	resetApp();
 });
 
 function renderSketch(sketch){
@@ -1097,26 +1101,50 @@ function saveSketch(){
         sketch: strSketch
     },
     function(data, status){
-		helpText.html(data);
+		var data_packet = null;
+		try{
+			data_packet = JSON.parse(data);
+			helpText.html(data_packet.message + data_packet.sketch_name);
+
+			//now printing debug messages if any
+			console.log(data_packet.debug);
+		}catch(e){
+			console.log(e);
+			console.log(data);
+		}
     });
 }
 
 function loadSketch(sketchID){
-	skObj = 'None';
-
 	$.post("actions.php",
     {
         action: "load",
         sketch_id: sketchID
     },
     function(data, status){
-		//console.log(data);
-		skObj = JSON.parse(data);
-		skObj.parent = skObj.uid;
-		skObj.uid  = uuid.v1();
-		skObj.name = getNewName(skObj.name);
-		renderSketch(skObj);
-    });
+		var data_packet = null;
+		try{
+			data_packet = JSON.parse(data);
 
-	return skObj;
+			skObj = JSON.parse(data_packet.sketch);
+			//now updating the helpText that loading is finished
+			helpText.text(data_packet.message + data_packet.sketch_name);
+			//loading the sketch itself into the document
+			skObj.parent = skObj.uid;
+			skObj.uid  = uuid.v1();
+			skObj.name = getNewName(skObj.name);
+			//clearing any prevous sketches
+			resetApp();
+			renderSketch(skObj);
+			curSketch = skObj;
+
+			//printing debug messages if any
+			console.log(data_packet.debug);
+		}catch(e){
+			console.log(e);
+			console.log(data);
+		}
+		// console.log(data_packet);
+		//this is the sketch object
+    });
 }
