@@ -18,6 +18,10 @@ var c3 = canvas3.getContext("2d");
 var mouse1X, mouse1Y, mouse2X, mouse2Y,mouse_ix,mouse_iy,mouseX,mouseY;
 var centerX, centerY, radius, startAngle, stopAngle;
 
+//this is to measure the position of the canvas and then use that to calculate
+//the clicked coordinate
+var bound = document.getElementById('canvas_1').getBoundingClientRect();
+
 var penIsDown = false;
 var centerSelected = false;
 var curveStarted = false;
@@ -28,6 +32,7 @@ var imageData;
 var eraserSize = 30;;
 
 var currentTool = "none";
+var curToolDOM;//this is the dom element of the tool icon
 
 //variables for polygon tool<>
 var polygonVert = new Array();
@@ -55,11 +60,10 @@ var scaleFactor = 1;
 //variables for ellipse tool</>
 
 //default thumbnail size
-var thumbnail_scale = 0.1;
-//global placeholder for thumbnail base64 strings
-var global_thumbNail = 'none';
+var thumbnail_scale = 0.2;
 
 curSketch = newSketch();
+updatePen();
 
 function newSketch(parentID, authorName, dateStamp){
 	if(parentID === undefined){parentID = 'None';}
@@ -95,11 +99,13 @@ function clearTempCanvases(){//clears all the temporary canvases that hold previ
 	
 function floodFill(startX,startY,ctx){
 	imageData = ctx.getImageData(0,0,canvas1.width,canvas1.height);
+	// console.log(imageData);
+	// console.log(imageData.data[(startY*canvas1.width+startX)*4]);
 	startR = imageData.data[(startY*canvas1.width+startX)*4];
 	startG = imageData.data[(startY*canvas1.width+startX)*4+1];
 	startB = imageData.data[(startY*canvas1.width+startX)*4+2];
 	startA = imageData.data[(startY*canvas1.width+startX)*4+3];
-		
+	// console.log(startR, startG, startB, startA);
 	pixelStack.push([startX,startY]);
 	
 	while(pixelStack.length){
@@ -274,15 +280,16 @@ $('.scribblePad').click(function(e){
 	//without the chain option checked
 		if(!chainCheckbox.checked){
 		if(!penIsDown){
-			mouse1X = e.pageX - this.offsetLeft;
-			mouse1Y = e.pageY - this.offsetTop;
+			// console.log(e.pageX, e.pageY, bound.left, bound.top);
+			mouse1X = e.pageX - bound.left;
+			mouse1Y = e.pageY - bound.top;
 			
 			penIsDown = true;
 			helpText.text('Pick the ending point or Hit Esc to stop drawing');
 		}
 		else if(penIsDown){
-			mouse2X = e.pageX - this.offsetLeft;
-			mouse2Y = e.pageY - this.offsetTop;
+			mouse2X = e.pageX - bound.left;
+			mouse2Y = e.pageY - bound.top;
 			
 			penIsDown = false;
 			//console.log(mouse2X+", "+mouse2Y);
@@ -303,16 +310,16 @@ $('.scribblePad').click(function(e){
 		//with the chain option checked
 		else if(chainCheckbox.checked){
 		if(!penIsDown){
-			mouse1X = e.pageX - this.offsetLeft;
-			mouse1Y = e.pageY - this.offsetTop;
+			mouse1X = e.pageX - bound.left;
+			mouse1Y = e.pageY - bound.top;
 			
 			penIsDown = true;
 			helpText.text('Continue picking points. Hit Esc to stop drawing');
 			//console.log(mouse1X+", "+mouse1Y);
 		}
 		else if(penIsDown){
-			mouse2X = e.pageX - this.offsetLeft;
-			mouse2Y = e.pageY - this.offsetTop;
+			mouse2X = e.pageX - bound.left;
+			mouse2Y = e.pageY - bound.top;
 			
 			c1.beginPath();
 			c1.moveTo(mouse1X,mouse1Y);
@@ -330,16 +337,16 @@ $('.scribblePad').click(function(e){
 	}
 	else if(currentTool == "rectangle"){
 		if(!penIsDown){
-			mouse1X = e.pageX - this.offsetLeft;
-			mouse1Y = e.pageY - this.offsetTop;
+			mouse1X = e.pageX - bound.left;
+			mouse1Y = e.pageY - bound.top;
 			
 			//console.log(mouse1X+", "+mouse1Y);
 			penIsDown = true;
 			helpText.text('Pick the second corner or Hit Esc to stop drawing');
 		}
 		else if(penIsDown){
-			mouse2X = e.pageX - this.offsetLeft;
-			mouse2Y = e.pageY - this.offsetTop;
+			mouse2X = e.pageX - bound.left;
+			mouse2Y = e.pageY - bound.top;
 			
 			penIsDown = false;
 			
@@ -362,14 +369,14 @@ $('.scribblePad').click(function(e){
 	}
 	else if(currentTool == 'polygon'){
 		if(!penIsDown){
-			mouse1X = e.pageX - this.offsetLeft;
-			mouse1Y = e.pageY - this.offsetTop;
+			mouse1X = e.pageX - bound.left;
+			mouse1Y = e.pageY - bound.top;
 
 			penIsDown = true;
 			helpText.text('Finish drawing the polygon');
 		}else{
-			mouse2X = e.pageX - this.offsetLeft;
-			mouse2Y = e.pageY - this.offsetTop;
+			mouse2X = e.pageX - bound.left;
+			mouse2Y = e.pageY - bound.top;
 			
 			polygonVert = [];
 			polygonVert.push([mouse2X,mouse2Y]);
@@ -403,8 +410,8 @@ $('.scribblePad').click(function(e){
 	}
 	else if(currentTool == "circle"){
 		if(!centerSelected){
-			centerX = e.pageX - this.offsetLeft;
-			centerY = e.pageY - this.offsetTop;
+			centerX = e.pageX - bound.left;
+			centerY = e.pageY - bound.top;
 			
 			centerSelected = true;
 			helpText.text('Pick the starting point of the arc/circle');
@@ -412,8 +419,8 @@ $('.scribblePad').click(function(e){
 		}
 		else if(centerSelected){
 			if(!penIsDown){
-				mouse1X = e.pageX - this.offsetLeft;
-				mouse1Y = e.pageY - this.offsetTop;
+				mouse1X = e.pageX - bound.left;
+				mouse1Y = e.pageY - bound.top;
 				
 				penIsDown = true;
 				
@@ -422,8 +429,8 @@ $('.scribblePad').click(function(e){
 				helpText.text('Pick the ending point');
 			}
 			else if(penIsDown){
-				mouse2X = e.pageX - this.offsetLeft;
-				mouse2Y = e.pageY - this.offsetTop;
+				mouse2X = e.pageX - bound.left;
+				mouse2Y = e.pageY - bound.top;
 				
 				penIsDown = false;
 				centerSelected = false;
@@ -461,14 +468,14 @@ $('.scribblePad').click(function(e){
 	else if(currentTool == "ellipse"){
 		if(!penIsDown){
 			if(!curveStarted){
-				mouse1X = e.pageX - this.offsetLeft;
-				mouse1Y = e.pageY - this.offsetTop;
+				mouse1X = e.pageX - bound.left;
+				mouse1Y = e.pageY - bound.top;
 				
 				curveStarted = true;
 				helpText.text('Select the Ending point of the axis');
 			}else{
-				mouse_ix = e.pageX - this.offsetLeft;
-				mouse_iy = e.pageY - this.offsetTop;
+				mouse_ix = e.pageX - bound.left;
+				mouse_iy = e.pageY - bound.top;
 
 				//console.log(mouse1X,mouse1Y,mouse_ix,mouse_iy);
 				axisAngle = lineAngle(mouse1X,mouse1Y,mouse_ix,mouse_iy);//console.log(axisAngle);
@@ -487,8 +494,8 @@ $('.scribblePad').click(function(e){
 			}
 		}else{
 			if(curveStarted){
-				mouse2X = e.pageX - this.offsetLeft;
-				mouse2Y = e.pageY - this.offsetTop;
+				mouse2X = e.pageX - bound.left;
+				mouse2Y = e.pageY - bound.top;
 				
 				var minAxis = lineDist([mouse1X,mouse1Y],[mouse_ix,mouse_iy],[mouse2X,mouse2Y]);
 				scaleFactor = 2*mod(minAxis)/axisLength;
@@ -521,10 +528,10 @@ $('.scribblePad').click(function(e){
 			penIsDown = true;
 			updatePen();
 			freeHand = [];
-			mouse1X = e.pageX - this.offsetLeft;
-			mouse1Y = e.pageY - this.offsetTop;
-			mouse2X = e.pageX - this.offsetLeft;
-			mouse2Y = e.pageY - this.offsetTop;
+			mouse1X = e.pageX - bound.left;
+			mouse1Y = e.pageY - bound.top;
+			mouse2X = e.pageX - bound.left;
+			mouse2Y = e.pageY - bound.top;
 			freeHand.push(new Array(mouse1X,mouse1Y));
 			//console.log(mouse1X,mouse1Y);
 			helpText.text('Click to stop drawing');
@@ -549,20 +556,20 @@ $('.scribblePad').click(function(e){
 	else if(currentTool == "curve"){
 		if(!penIsDown){
 			penIsDown = true;//console.log('penIsDown = '+penIsDown);
-			mouse1X = e.pageX - this.offsetLeft;
-			mouse1Y = e.pageY - this.offsetTop;
+			mouse1X = e.pageX - bound.left;
+			mouse1Y = e.pageY - bound.top;
 
 			helpText.text('continue selecting control points or hit Esc to stop');
 		}
 		else if(penIsDown){
 			if(!curveStarted){
 				curveStarted = true;
-				mouse_ix = e.pageX - this.offsetLeft;
-				mouse_iy = e.pageY - this.offsetTop;
+				mouse_ix = e.pageX - bound.left;
+				mouse_iy = e.pageY - bound.top;
 			}
 			else if(curveStarted){
-				mouse2X = e.pageX - this.offsetLeft;
-				mouse2Y = e.pageY - this.offsetTop;
+				mouse2X = e.pageX - bound.left;
+				mouse2Y = e.pageY - bound.top;
 				
 				updatePen();
 				c1.beginPath();
@@ -583,26 +590,27 @@ $('.scribblePad').click(function(e){
 		}
 	}
 	else if(currentTool == "floodFill"){
-		var startX = e.pageX - this.offsetLeft;
-		var startY = e.pageY - this.offsetTop;
+		var startX = e.pageX - bound.left;
+		var startY = e.pageY - bound.top;
 		
 		updatePen();//updates the canvas fillStyle to the selected in the colour selector tool
-		floodFill(startX, startY, c1);
+		// console.log(startX, startY);
+		floodFill(Math.floor(startX), Math.floor(startY), c1);
 		
 		var floodObj = {type: "flood", floodPt: new Array(startX,startY), floodColor: c1.fillStyle};
 		addObject(floodObj);
 	}
 	else if(currentTool == "eraser"){
 		if(!penIsDown){
-			mouse1X = e.pageX - this.offsetLeft;
-			mouse1Y = e.pageY - this.offsetTop;
+			mouse1X = e.pageX - bound.left;
+			mouse1Y = e.pageY - bound.top;
 			//console.log(mouse1X+", "+mouse1Y);
 			penIsDown = true;
 			helpText.text('Pick the second corner of the area to be cleared or hit esc to abort');
 		}
 		else if(penIsDown){
-			mouse2X = e.pageX - this.offsetLeft;
-			mouse2Y = e.pageY - this.offsetTop;
+			mouse2X = e.pageX - bound.left;
+			mouse2Y = e.pageY - bound.top;
 			penIsDown = false;
 			c1.beginPath();
 			c1.clearRect(mouse1X,mouse1Y,mouse2X-mouse1X,mouse2Y-mouse1Y);
@@ -621,8 +629,8 @@ $('.scribblePad').click(function(e){
 			if(imageIsLoaded){
 				aspectRatio = $('#imageUploaded').height()/$('#imageUploaded').width();//defining the aspect ratio of the image
 			
-				mouse1X = e.pageX - this.offsetLeft;
-				mouse1Y = e.pageY - this.offsetTop;
+				mouse1X = e.pageX - bound.left;
+				mouse1Y = e.pageY - bound.top;
 				imageUploaded = document.getElementById('imageUploaded');
 				//c2.drawImage(imageUploaded,mouse1X,mouse1Y);
 				penIsDown = true;//console.log(penIsDown);
@@ -635,8 +643,8 @@ $('.scribblePad').click(function(e){
 		else if(penIsDown){
 			clearTempCanvases()
 			
-			mouse2X = e.pageX - this.offsetLeft;
-			mouse2Y = e.pageY - this.offsetTop;
+			mouse2X = e.pageX - bound.left;
+			mouse2Y = e.pageY - bound.top;
 			
 			c3.drawImage(imageUploaded,mouse1X,mouse1Y,mouse2X-mouse1X,(mouse2X-mouse1X)*aspectRatio);
 			
@@ -662,8 +670,8 @@ $('.scribblePad').click(function(e){
 		var txtSize = $('#textSize').val();
 		if(txt == ''){alert('No Text to Write');}
 		else{
-			mouse1X = e.pageX - this.offsetLeft;
-			mouse1Y = e.pageY - this.offsetTop;
+			mouse1X = e.pageX - bound.left;
+			mouse1Y = e.pageY - bound.top;
 			
 			c1.fillStyle = $('#fillColor').val();
 			c1.font = txtSize+"px Arial";
@@ -682,8 +690,8 @@ $('.scribblePad').mousemove(function(e){
 	if(currentTool == "line"){
 		if(penIsDown){
 			clearTempCanvases()
-			mouse2X = e.pageX - this.offsetLeft;
-			mouse2Y = e.pageY - this.offsetTop;
+			mouse2X = e.pageX - bound.left;
+			mouse2Y = e.pageY - bound.top;
 			c2.beginPath();
 			c2.moveTo(mouse1X,mouse1Y);
 			c2.lineTo(mouse2X,mouse2Y);
@@ -695,8 +703,8 @@ $('.scribblePad').mousemove(function(e){
 	else if(currentTool == "rectangle"){
 		if(penIsDown){
 			clearTempCanvases()
-			mouse2X = e.pageX - this.offsetLeft;
-			mouse2Y = e.pageY - this.offsetTop;
+			mouse2X = e.pageX - bound.left;
+			mouse2Y = e.pageY - bound.top;
 			c2.beginPath();
 			c2.strokeRect(mouse1X,mouse1Y,mouse2X-mouse1X,mouse2Y-mouse1Y);
 		}
@@ -705,8 +713,8 @@ $('.scribblePad').mousemove(function(e){
 	else if(currentTool == 'polygon'){
 		clearTempCanvases();
 		if(penIsDown){
-			mouse2X = e.pageX - this.offsetLeft;
-			mouse2Y = e.pageY - this.offsetTop;
+			mouse2X = e.pageX - bound.left;
+			mouse2Y = e.pageY - bound.top;
 
 			c2.beginPath();
 			c2.moveTo(mouse1X,mouse1Y);
@@ -740,8 +748,8 @@ $('.scribblePad').mousemove(function(e){
 		else if(centerSelected){
 			if(!penIsDown){
 				clearTempCanvases()
-				mouse_ix = e.pageX - this.offsetLeft;
-				mouse_iy = e.pageY - this.offsetTop;
+				mouse_ix = e.pageX - bound.left;
+				mouse_iy = e.pageY - bound.top;
 				c2.beginPath();
 				c2.moveTo(centerX,centerY);
 				c2.lineTo(mouse_ix,mouse_iy);
@@ -749,8 +757,8 @@ $('.scribblePad').mousemove(function(e){
 			}
 			else if(penIsDown){
 				clearTempCanvases()
-				mouse_ix = e.pageX - this.offsetLeft;
-				mouse_iy = e.pageY - this.offsetTop;
+				mouse_ix = e.pageX - bound.left;
+				mouse_iy = e.pageY - bound.top;
 				
 				stopAngle = lineAngle(centerX,centerY,mouse_ix,mouse_iy);
 				if(Math.abs(startAngle-stopAngle)<(Math.PI/60)){
@@ -770,8 +778,8 @@ $('.scribblePad').mousemove(function(e){
 		if(!penIsDown){
 			if(curveStarted){
 				//clearTempCanvases();
-				mouse_ix = e.pageX - this.offsetLeft;
-				mouse_iy = e.pageY - this.offsetTop;
+				mouse_ix = e.pageX - bound.left;
+				mouse_iy = e.pageY - bound.top;
 				
 				c2.beginPath();
 				c2.moveTo(mouse1X,mouse1Y);
@@ -788,8 +796,8 @@ $('.scribblePad').mousemove(function(e){
 				c2.lineTo(axisLength,0);
 				c2.stroke();
 				
-				mouse2X = e.pageX - this.offsetLeft;
-				mouse2Y = e.pageY - this.offsetTop;
+				mouse2X = e.pageX - bound.left;
+				mouse2Y = e.pageY - bound.top;
 				
 				c2.restore();
 				c2.save();
@@ -806,8 +814,8 @@ $('.scribblePad').mousemove(function(e){
 		if(penIsDown){
 			mouse1X = mouse2X;
 			mouse1Y = mouse2Y;
-			mouse2X = e.pageX - this.offsetLeft;
-			mouse2Y = e.pageY - this.offsetTop;
+			mouse2X = e.pageX - bound.left;
+			mouse2Y = e.pageY - bound.top;
 			c2.beginPath();
 			c2.moveTo(mouse1X,mouse1Y);
 			c2.lineTo(mouse2X,mouse2Y);
@@ -821,8 +829,8 @@ $('.scribblePad').mousemove(function(e){
 		if(penIsDown){
 			if(!curveStarted){
 				clearTempCanvases()
-				mouse2X = e.pageX - this.offsetLeft;
-				mouse2Y = e.pageY - this.offsetTop;
+				mouse2X = e.pageX - bound.left;
+				mouse2Y = e.pageY - bound.top;
 				c2.beginPath();
 				c2.moveTo(mouse1X,mouse1Y);
 				c2.lineTo(mouse2X,mouse2Y);
@@ -831,8 +839,8 @@ $('.scribblePad').mousemove(function(e){
 			}
 			else if(curveStarted){
 				clearTempCanvases()
-				mouse2X = e.pageX - this.offsetLeft;
-				mouse2Y = e.pageY - this.offsetTop;
+				mouse2X = e.pageX - bound.left;
+				mouse2Y = e.pageY - bound.top;
 				c2.beginPath();
 				c2.moveTo(mouse_ix,mouse_iy);
 				c2.lineTo(mouse2X,mouse2Y);
@@ -852,8 +860,8 @@ $('.scribblePad').mousemove(function(e){
 	else if(currentTool == "eraser"){
 		if(penIsDown){
 			clearTempCanvases()
-			mouse2X = e.pageX - this.offsetLeft;
-			mouse2Y = e.pageY - this.offsetTop;
+			mouse2X = e.pageX - bound.left;
+			mouse2Y = e.pageY - bound.top;
 			c2.beginPath();
 			c2.strokeRect(mouse1X,mouse1Y,mouse2X-mouse1X,mouse2Y-mouse1Y);
 		}
@@ -863,8 +871,8 @@ $('.scribblePad').mousemove(function(e){
 		if(penIsDown){
 			clearTempCanvases()
 			
-			mouse2X = e.pageX - this.offsetLeft;
-			mouse2Y = e.pageY - this.offsetTop;
+			mouse2X = e.pageX - bound.left;
+			mouse2Y = e.pageY - bound.top;
 			// console.log('drawing on c2');
 			c2.drawImage(imageUploaded,mouse1X,mouse1Y,mouse2X-mouse1X,(mouse2X-mouse1X)*aspectRatio);
 			//c2.strokeRect(mouse1X,mouse1Y,mouse2X-mouse1X,(mouse2X-mouse1X)*aspectRatio);
@@ -875,8 +883,8 @@ $('.scribblePad').mousemove(function(e){
 	}
 	else if(currentTool == "text"){
 		clearTempCanvases()
-		mouse1X = e.pageX - this.offsetLeft;
-		mouse1Y = e.pageY - this.offsetTop;
+		mouse1X = e.pageX - bound.left;
+		mouse1Y = e.pageY - bound.top;
 		
 		var txt = $('#text_input').val();
 		var txtSize = $('#textSize').val();
@@ -903,7 +911,7 @@ function press_btn(e){
 		}
 		$('#text_input').val('');
 		clearTempCanvases()
-		loadTool();
+		loadTool(curToolDOM);
 	}else if(e.keyCode == 90 && e.ctrlKey){//this is ctrl+z - undo
 		if(curSketch.tempObj.length == 0){
 			return;//because nothing to undo
@@ -950,8 +958,10 @@ function renderSketch(sketch, onlyTemp){
 
 $('#render_btn').click(function(){renderSketch(curSketch)});
 
-function loadTool(toolName){
-	currentTool = toolName;
+function loadTool(toolIcon){
+	currentTool = toolIcon.getElementsByTagName('img')[0].alt;
+	curToolDOM = toolIcon;
+	// console.log(curToolDOM, currentTool);
 	if(currentTool=="line"){
 		$('#chain_box').show();
 		$('#fill_box').hide();
@@ -1062,7 +1072,7 @@ function loadImage() {
 		reader.onload = function (e) {
 			//$('#imageUploaded').attr('src', e.target.result);
 			$('#imageUploaded').remove();
-			$('<img src="'+e.target.result+'" id="imageUploaded" height="100px" style="visibility:hidden"/>').appendTo('#tool_box');
+			$('<img src="'+e.target.result+'" id="imageUploaded" height="100px" style="visibility:hidden"/>').appendTo('#bottomBar');
 			//imageUploaded.src = e.target.result;
 		}
 		
@@ -1204,29 +1214,39 @@ function update_thumb(sketchObj, callback, size){
 	if(size === undefined){
 		size = vPrd([canvas1.width, canvas1.height], thumbnail_scale);
 	}
+	// console.log(size);
 
 	steps = Math.ceil(Math.log(10) / Math.log(2));
 
-	img = canvas1.toDataURL();
+	img_data = canvas1.toDataURL();
 
-	var resize_canvas = document.createElement('canvas');
-	var rc = resize_canvas.getContext('2d');
-	c2.fillStyle = "#ffffff"
+	var img = new Image();
+	img.src = img_data;
 
-	resize_canvas.width = size[0];
-	resize_canvas.height = size[1];
+	img.onload = function(){
+		var canvas = document.createElement('canvas');
+		var ctx = canvas.getContext('2d');
+		canvas.width = size[0];
+		canvas.height = size[1];
 
-	c2.fillRect(0, 0, size[0], size[1]);
-	var image = new Image();
-	image.src = img;
+		var oc   = document.createElement('canvas'),
+		octx = oc.getContext('2d');
 
-	image.onload = function(){
-		rc.drawImage(this, 0, 0, size[0], size[1]);
-		s = [size[0],size[1]]
-		for(var i = 0; i < steps; i++){
-			
-		}
-		sketchObj.thumbnail = resize_canvas.toDataURL();
+		oc.width  = img.width  * 0.5;
+		oc.height = img.height * 0.5;
+		//making it a white background
+		octx.fillStyle = '#ffffff';
+		octx.fillRect(0,0,oc.width, oc.height);
+
+		octx.drawImage(img, 0, 0, oc.width, oc.height);
+		//2
+		octx.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5);
+		//3
+		ctx.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5,
+                  0, 0, canvas.width,   canvas.height);
+		// console.log(canvas.toDataURL());
+		
+		sketchObj.thumbnail = canvas.toDataURL();
 		callback();
 	}
 }

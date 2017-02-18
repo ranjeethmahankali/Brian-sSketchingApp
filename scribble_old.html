@@ -9,9 +9,9 @@
 
 <body>
     <div id="container">
-        <canvas id = "canvas_3" height = "500px" width = "1000px" class = "scribblePad"></canvas>
-        <canvas id = "canvas_1" height = "500px" width = "1000px" class = "scribblePad"></canvas>
-        <canvas id = "canvas_2" height = "500px" width = "1000px" class = "scribblePad"></canvas>
+        <canvas id = "canvas_3" height = "500px" width = "500px" class = "scribblePad"></canvas>
+        <canvas id = "canvas_1" height = "500px" width = "500px" class = "scribblePad"></canvas>
+        <canvas id = "canvas_2" height = "500px" width = "500px" class = "scribblePad"></canvas>
         <div id = "canvas_screen" class = "scribblePad"></div>
         <br />
         <div id = "tool_box">
@@ -39,7 +39,7 @@
                 <input type = "color" name="strokeColor" value="#000000" id="strokeColor" onchange="updatePen()"/><br />
             </div>
             <div id = "lineWidthTool" class="tool">Line Width:
-                <input type = "number" name="lineWidth" value="1" id="lineWidth" onchange="updatePen()" min="1" max="20"/><br />
+                <input type = "number" name="lineWidth" value="5" id="lineWidth" onchange="updatePen()" min="1" max="20"/><br />
             </div>
             <br />
             

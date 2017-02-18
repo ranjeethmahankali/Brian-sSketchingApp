@@ -62,7 +62,7 @@ function getJsonStr($filePath){
 //main logic
 $self_path = $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 $path  = pathinfo($self_path);
-$app_file = 'scribble_old.html';
+$app_file = 'scribble.html';
 $app_path = 'http://'.$path['dirname'].'/'.$app_file;
 
 if(isset($_POST['action']) && $_SERVER['HTTP_REFERER'] == $app_path){
