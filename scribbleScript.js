@@ -54,6 +54,11 @@ var axisLength;
 var scaleFactor = 1;
 //variables for ellipse tool</>
 
+//default thumbnail size
+var thumbnail_scale = 0.1;
+//global placeholder for thumbnail base64 strings
+var global_thumbNail = 'none';
+
 curSketch = newSketch();
 
 function newSketch(parentID, authorName, dateStamp){
@@ -64,11 +69,13 @@ function newSketch(parentID, authorName, dateStamp){
 	var newSketch = {'name':'None', 
 				'objects':new Array(),
 				'tempObj': new Array(),
+				'delObj': new Array(),//these are the undone objects ready to use for redo
 				'author':'None', 
 				'date':dateStamp, 
 				'uid': uuid.v1(),
 				'parent': 'None',
-				'child':new Array()
+				'child':new Array(),
+				'thumbnail':'',
 			};
 	
 	return newSketch;
@@ -879,7 +886,8 @@ $('.scribblePad').mousemove(function(e){
 		}
 	}
 });
-		
+
+//keyboard listener behavior	
 window.addEventListener("keydown",press_btn,false);
 function press_btn(e){
 	if(e.keyCode == 27){
@@ -896,18 +904,47 @@ function press_btn(e){
 		$('#text_input').val('');
 		clearTempCanvases()
 		loadTool();
+	}else if(e.keyCode == 90 && e.ctrlKey){//this is ctrl+z - undo
+		if(curSketch.tempObj.length == 0){
+			return;//because nothing to undo
+		}
+		clearTempCanvases();
+		c1.clearRect(0,0,canvas1.width,canvas1.height);
+
+		deleted = curSketch.tempObj.pop();
+		curSketch.delObj.push(deleted);
+
+		renderSketch(curSketch);
+	}else if(e.keyCode == 89 && e.ctrlKey){//this is ctrl+y - redo
+		if(curSketch.delObj.length == 0){
+			return;//because nothing to redo
+		}
+		clearTempCanvases();
+		c1.clearRect(0,0,canvas1.width,canvas1.height);
+
+		toAdd = curSketch.delObj.pop();
+		curSketch.tempObj.push(toAdd);
+
+		renderSketch(curSketch);
 	}
 }
-	
-$('#clear_btn').click(function(){
+
+function resetApp(){
 	clearTempCanvases()
 	c1.clearRect(0,0,canvas1.width,canvas1.height);
 	penIsDown = false;
-});
 
-function renderSketch(sketch){
+	curSketch = newSketch();
+}
+$('#clear_btn').click(function(){resetApp();});
+
+function renderSketch(sketch, onlyTemp){
 	for(var i = 0; i < sketch.objects.length; i++){
 		renderObject(sketch.objects[i],c1);
+	}
+
+	for(var i = 0; i < sketch.tempObj.length; i++){
+		renderObject(sketch.tempObj[i],c1);
 	}
 }
 
@@ -1068,26 +1105,40 @@ function saveImage(){
 	//alert('yo');
 	//console.log(dataURL);
 }
-$('#save_btn').click(function(){saveSketch();});
+$('#save_btn').click(function(){
+	//this callback format is needed because onload takes time sometimes.
+	//to update the thumbnail
+	update_thumb(curSketch, saveSketch);
+});
 
 function addObject(obj){
 	curSketch.tempObj.push(obj);
 }
 
-function getNewName(defaultName){
+function getNewName(){
 	newName = prompt('Give a name to this sketch (max 20 characters)');
-	while(newName.length > 20 || newName == defaultName){
-		newName = prompt('Name is either too long or repeated, try again(max 20 characters)');
+	while(newName.length > 20){
+		newName = prompt('Name is either too long, try again(max 20 characters)');
 	}
 	return newName;
 }
 
+//this reports the error in the datapacket as alert, if any.
+function reportError(data_packet){
+	if(data_packet.error != ""){
+		alert(data_packet.error);
+	}
+}
+
+//this function saves the current sketch to the server
 function saveSketch(){
 	//code to save the above object somewhere
+	// console.log(curSketch.thumbnail);
 	var sk =  cloneObject(curSketch);
 	sk.objects = sk.objects.concat(sk.tempObj);
 	sk.tempObj = new Array();
-	sk.name = getNewName(sk.name);
+	sk.delObjects = new Array();
+	if(sk.name == "None"){sk.name = getNewName();}
 	
 	strSketch = JSON.stringify(sk);
 	
@@ -1097,26 +1148,85 @@ function saveSketch(){
         sketch: strSketch
     },
     function(data, status){
-		helpText.html(data);
+		var data_packet = null;
+		try{
+			data_packet = JSON.parse(data);
+			reportError(data_packet);
+			helpText.html(data_packet.message + '"'+data_packet.sketch_name+'"');
+
+			//now printing debug messages if any
+			// console.log(data_packet.debug);
+		}catch(e){
+			console.log(e);
+			console.log(data);
+		}
     });
 }
 
+//this function loads the sketch with the given id into the app.
 function loadSketch(sketchID){
-	skObj = 'None';
-
 	$.post("actions.php",
     {
         action: "load",
         sketch_id: sketchID
     },
     function(data, status){
-		//console.log(data);
-		skObj = JSON.parse(data);
-		skObj.parent = skObj.uid;
-		skObj.uid  = uuid.v1();
-		skObj.name = getNewName(skObj.name);
-		renderSketch(skObj);
-    });
+		var data_packet = null;
+		try{
+			data_packet = JSON.parse(data);
+			reportError(data_packet);
 
-	return skObj;
+			skObj = JSON.parse(data_packet.sketch);
+			//now updating the helpText that loading is finished
+			helpText.text(data_packet.message + data_packet.sketch_name);
+			//loading the sketch itself into the document
+			skObj.parent = skObj.uid;
+			skObj.uid  = uuid.v1();
+			skObj.name = null;
+			//clearing any prevous sketches
+			resetApp();
+			renderSketch(skObj);
+			curSketch = skObj;
+
+			//printing debug messages if any
+			console.log(data_packet.debug);
+		}catch(e){
+			console.log(e);
+			console.log(data);
+		}
+		// console.log(data_packet);
+		//this is the sketch object
+    });
+}
+
+//this function updates the thumbnail
+function update_thumb(sketchObj, callback, size){
+	if(size === undefined){
+		size = vPrd([canvas1.width, canvas1.height], thumbnail_scale);
+	}
+
+	steps = Math.ceil(Math.log(10) / Math.log(2));
+
+	img = canvas1.toDataURL();
+
+	var resize_canvas = document.createElement('canvas');
+	var rc = resize_canvas.getContext('2d');
+	c2.fillStyle = "#ffffff"
+
+	resize_canvas.width = size[0];
+	resize_canvas.height = size[1];
+
+	c2.fillRect(0, 0, size[0], size[1]);
+	var image = new Image();
+	image.src = img;
+
+	image.onload = function(){
+		rc.drawImage(this, 0, 0, size[0], size[1]);
+		s = [size[0],size[1]]
+		for(var i = 0; i < steps; i++){
+			
+		}
+		sketchObj.thumbnail = resize_canvas.toDataURL();
+		callback();
+	}
 }
