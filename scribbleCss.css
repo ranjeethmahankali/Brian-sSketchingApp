@@ -9,40 +9,86 @@ body{
 #bg{
     background-color: white;
 }
-#topToolBar{
+#tl{
+    position: fixed;
+    display: block;
+    background-color: gray;
+    width: 61px;
+    height: 124px;
+    left: 5px;
+    top: 5px;
+}
+#topBar{
     position: fixed;
     display: block;
     top: 5px;
     left: 67px;
-    width: 600px;
+    width: 603px;
     height: 60px;
-    border: 1px solid black;
+    border-left: 1px solid black;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
 }
-#topToolBar table{
-    width: 100%;
-    max-height: 100%;
-}
-.att{
-    position: relative;
+#colorPicker{
+    position: absolute;
     display: block;
-    background-color: red;
-    width: 30%;
+    width: 200px;
+    height: 61px;
+    border-right: 1px solid black;
 }
-#tl{
+#att1{
+    position: absolute;
+    display: block;
+    left: 201px;
+    width: 200px;
+    height: 61px;
+    border-right: 1px solid black;
+}
+#att2{
+    position: absolute;
+    display: block;
+    left: 402px;
+    width: 200px;
+    height: 61px;
+    border-right: 1px solid black;
+}
+#topBar2{
     position: fixed;
     display: block;
-    background-color: purple;
-    width: 61px;
+    top: 67px;
+    left: 67px;
+    width: 603px;
+    height: 60px;
+}
+#option1{
+    position: absolute;
+    display: block;
+    width: 200px;
     height: 61px;
-    left: 5px;
-    top: 5px;
+    border: 1px solid black;
+}
+#option2{
+    position: absolute;
+    display: block;
+    left: 201px;
+    width: 200px;
+    height: 61px;
+    border: 1px solid black;
+}
+#option3{
+    position: absolute;
+    display: block;
+    left: 402px;
+    width: 200px;
+    height: 61px;
+    border: 1px solid black;
 }
 #leftToolBar{
     position: fixed;
     display: block;
     width: 62px;
     left: 5px;
-    top: 67px;
+    top: 130px;
     height: 600px;
     background-color: cornflowerblue;
 }
@@ -63,6 +109,8 @@ body{
 }
 .icons{
     position: relative;
+    max-width: 100%;
+    cursor: pointer;
 }
 #bl{
     position: fixed;
@@ -86,8 +134,8 @@ body{
 	-webkit-user-select: none; 
 	-o-user-select: none; 
 	position : absolute;
-	top : 90px;
-	left : 90px;
+	top : 135px;
+	left : 73px;
 	z-index : 300;
 		}
 		
@@ -99,8 +147,8 @@ body{
 	-webkit-user-select: none; 
 	-o-user-select: none; 
 	position : absolute;
-	top : 90px;
-	left : 90px;
+	top : 135px;
+	left : 73px;
 	z-index : 500;
 	opacity : 0.6;
 		}
