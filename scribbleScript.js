@@ -27,7 +27,7 @@ var centerSelected = false;
 var curveStarted = false;
 var myCanvas = $('#canvas_screen');
 var toolList = document.getElementById('tool_list');
-var helpText = $('#help_text');
+var helpText = $('p#help_text');
 var imageData;
 var eraserSize = 30;;
 
@@ -98,14 +98,15 @@ function clearTempCanvases(){//clears all the temporary canvases that hold previ
 }
 	
 function floodFill(startX,startY,ctx){
+	startX = Math.floor(startX);
+	startY = Math.floor(startY);
 	imageData = ctx.getImageData(0,0,canvas1.width,canvas1.height);
-	// console.log(imageData);
-	// console.log(imageData.data[(startY*canvas1.width+startX)*4]);
+	
 	startR = imageData.data[(startY*canvas1.width+startX)*4];
 	startG = imageData.data[(startY*canvas1.width+startX)*4+1];
 	startB = imageData.data[(startY*canvas1.width+startX)*4+2];
 	startA = imageData.data[(startY*canvas1.width+startX)*4+3];
-	// console.log(startR, startG, startB, startA);
+	
 	pixelStack.push([startX,startY]);
 	
 	while(pixelStack.length){
@@ -595,7 +596,7 @@ $('.scribblePad').click(function(e){
 		
 		updatePen();//updates the canvas fillStyle to the selected in the colour selector tool
 		// console.log(startX, startY);
-		floodFill(Math.floor(startX), Math.floor(startY), c1);
+		floodFill(startX,startY,c1);
 		
 		var floodObj = {type: "flood", floodPt: new Array(startX,startY), floodColor: c1.fillStyle};
 		addObject(floodObj);
@@ -946,7 +947,7 @@ function resetApp(){
 }
 $('#clear_btn').click(function(){resetApp();});
 
-function renderSketch(sketch, onlyTemp){
+function renderSketch(sketch){
 	for(var i = 0; i < sketch.objects.length; i++){
 		renderObject(sketch.objects[i],c1);
 	}
@@ -962,6 +963,10 @@ function loadTool(toolIcon){
 	currentTool = toolIcon.getElementsByTagName('img')[0].alt;
 	curToolDOM = toolIcon;
 	// console.log(curToolDOM, currentTool);
+	//now updating the UI
+	$('.tool').css('border', 'solid 1px #efefef');
+	curToolDOM.style.border = 'solid 1px #888888';
+	//loading different UI
 	if(currentTool=="line"){
 		$('#chain_box').show();
 		$('#fill_box').hide();
@@ -1121,14 +1126,15 @@ $('#save_btn').click(function(){
 	update_thumb(curSketch, saveSketch);
 });
 
+//adds the dawing object to the curSketch.tempObj list
 function addObject(obj){
 	curSketch.tempObj.push(obj);
 }
 
 function getNewName(){
 	newName = prompt('Give a name to this sketch (max 20 characters)');
-	while(newName.length > 20){
-		newName = prompt('Name is either too long, try again(max 20 characters)');
+	while(newName.length > 20 || newName == 'None'){
+		newName = prompt('Name is either too long or invalid, try again(max 20 characters)');
 	}
 	return newName;
 }
@@ -1148,7 +1154,10 @@ function saveSketch(){
 	sk.objects = sk.objects.concat(sk.tempObj);
 	sk.tempObj = new Array();
 	sk.delObjects = new Array();
-	if(sk.name == "None"){sk.name = getNewName();}
+	if(sk.name == "None"){
+		sk.name = getNewName();
+		curSketch.name = sk.name;
+	}
 	
 	strSketch = JSON.stringify(sk);
 	
@@ -1185,19 +1194,20 @@ function loadSketch(sketchID){
 		try{
 			data_packet = JSON.parse(data);
 			reportError(data_packet);
+			// console.log(data_packet);
 
 			skObj = JSON.parse(data_packet.sketch);
 			//now updating the helpText that loading is finished
-			helpText.text(data_packet.message + data_packet.sketch_name);
 			//loading the sketch itself into the document
 			skObj.parent = skObj.uid;
 			skObj.uid  = uuid.v1();
-			skObj.name = null;
+			skObj.name = "None";
+			
 			//clearing any prevous sketches
 			resetApp();
 			renderSketch(skObj);
 			curSketch = skObj;
-
+			helpText.text(data_packet.message +'"'+data_packet.sketch_name+'"');
 			//printing debug messages if any
 			console.log(data_packet.debug);
 		}catch(e){

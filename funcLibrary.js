@@ -215,3 +215,14 @@ function cloneObject(obj) {
  
     return temp;
 }
+
+//marks the point 'pos' on the context ctx with an 'x' symbol
+function markPt(pos, ctx){
+	ctx.beginPath();
+	ctx.moveTo(pos[0]-5, pos[1]-5);
+	ctx.lineTo(pos[0]+5, pos[1]+5);
+	ctx.moveTo(pos[0]+5, pos[1]-5);
+	ctx.lineTo(pos[0]-5, pos[1]+5);
+	ctx.closePath();
+	ctx.stroke();
+}

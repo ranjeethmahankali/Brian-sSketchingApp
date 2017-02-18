@@ -44,11 +44,15 @@ function update_roots($roots_var){
 }
 
 function getSketchObject($sketch_id){
-    $dirPath = $GLOBALS['sketch_dir'];
-    $filePath = $dirPath.$sketch_id.".json";
-    
-    $sketch = json_decode(file_get_contents($filePath), true);
-    return $sketch;
+    if(isset($sketch_id)){
+        $dirPath = $GLOBALS['sketch_dir'];
+        $filePath = $dirPath.$sketch_id.".json";
+        
+        $sketch = json_decode(file_get_contents($filePath), true);
+        return $sketch;
+    }else{
+        return "";
+    }
 }
 
 //this function gets the root sketch - oldest ancestor of any given sketch by doing recursion
@@ -78,8 +82,8 @@ function getTreeList($sketch_id, $treeList = array()){
 
 //from here on are functions that return html code for quick page building
 //this function just returns a generic division hmtl with given content and id
-function html_div($content, $id="none", $class="none"){
-    $div = '<div id="'.$id.'" class="'.$class.'">';
+function html_div($content, $id="none", $class="none", $clickHref="", $dblClickHref=""){
+    $div='<div id="'.$id.'" class="'.$class.'" onclick="'.$clickHref.'" ondoubleclick="'.$dblClickHref.'">';
     $div .= $content;
     $div .= '</div>';
 
@@ -88,7 +92,7 @@ function html_div($content, $id="none", $class="none"){
 
 //this function just returns a generic image tag with given id and src
 function html_img($src, $id="none", $class="none"){
-    $img = '<img src="'.$src.'" id = "'.$id.'" class="'.$class.'" >';
+    $img = '<img src="'.$src.'" id = "'.$id.'" class="'.$class.'">';
     return $img;
 }
 
