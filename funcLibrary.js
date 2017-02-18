@@ -215,36 +215,3 @@ function cloneObject(obj) {
  
     return temp;
 }
-
-//this function resizes a base64 image (i.e. string) and returns the base64 string of the resized image
-function resizeBase64Image(img, width, height){
-	// console.log(width, height);
-	var resize_canvas = document.createElement('canvas');
-	var rc = resize_canvas.getContext('2d');
-	c2.fillStyle = "#ffffff"
-
-	resize_canvas.width = width;
-	resize_canvas.height = height;
-
-	c2.fillRect(0, 0, width, height);
-	var image = new Image();
-	image.src = img;
-
-	image.onload = function(){
-		rc.drawImage(this, 0, 0, width, height);
-		setVal(resize_canvas.toDataURL());
-	}
-
-	return thumbNail;
-}
-
-function test(){
-	var x = {val:'none'};
-
-	function setVal(val){
-		x.val = val;
-	}
-
-	setVal(2);
-	return x.val;
-}

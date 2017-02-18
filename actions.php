@@ -11,7 +11,6 @@ function newDataPacket(){
                         "debug"=>"",
                         "message"=>"",
                         "data"=>"",
-                        "error" => ""
                         );
     return $data_packet;
 }
@@ -31,12 +30,12 @@ function addChild($parent_id, $child_id){
         array_push($parent['child'], $child_id);
     }
 
-    saveSketch($parent);
+    saveToFile($parent, $GLOBALS['sketch_dir']);
 }
 
 //this saves the sketch object in the relative path - $directory
-function saveSketch($sketch){
-    $path = $GLOBALS['sketch_dir'].$sketch['uid'].'.json';
+function saveToFile($sketch, $directory){
+    $path = $directory.$sketch['uid'].'.json';
     $fp = fopen($path, 'w');
     fwrite($fp, json_encode($sketch));
     fclose($fp);
@@ -44,11 +43,9 @@ function saveSketch($sketch){
     if($sketch['parent'] == 'None'){
         addToRoots($sketch);
     }else{
-        //add this to the child list of the parent sketch
+        //add this to the child list of the parent sketch - pending
         addChild($sketch['parent'], $sketch['uid']);
     }
-
-    //now saving the thumbnail of the sketch to the thumbs folder - pending
 
     return $path;
 }
@@ -69,13 +66,12 @@ if(isset($_POST['action']) && $_SERVER['HTTP_REFERER'] == $app_path){
     if($_POST['action'] == 'save'){
         //second param true does any needed conversions on input objects
         $sketch = json_decode($_POST['sketch'], true);
-        $save_path = saveSketch($sketch);
+        $save_path = saveToFile($sketch, $sketch_dir);
         //building the data_packet to send
         $data_packet = newDataPacket();
         $data_packet['message'] = "succesfully saved ";
         $data_packet['sketch_name'] = $sketch['name'];
         echo json_encode($data_packet);
-
     }elseif($_POST['action'] == 'load'){
         $filePath = $sketch_dir.$_POST['sketch_id'].'.json';
         $sketch_obj = getSketchObject($_POST['sketch_id']);
