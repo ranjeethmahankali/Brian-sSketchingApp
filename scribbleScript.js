@@ -1142,7 +1142,7 @@ function getNewName(){
 //this reports the error in the datapacket as alert, if any.
 function reportError(data_packet){
 	if(data_packet.error != ""){
-		alert(data_packet.error);
+		alert('Error: '+data_packet.error);
 	}
 }
 

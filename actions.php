@@ -59,13 +59,30 @@ function getJsonStr($filePath){
     return $json_str;
 }
 
-//main logic
-$self_path = $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-$path  = pathinfo($self_path);
-$app_file = 'scribble.html';
-$app_path = 'http://'.$path['dirname'].'/'.$app_file;
+//this function checks the referers and returns if they are one of our pages
+function checkRef(){
+    $self_path = $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+    $path  = pathinfo($self_path);
+    $app_files = array('scribble.php', 'scribble.html');
+    for($i = 0; $i < count($app_files); $i++){
+        $req_path = substr($_SERVER['HTTP_REFERER'], 0, strpos($_SERVER['HTTP_REFERER'], '?'));
+        $app_path = 'http://'.$path['dirname'].'/'.$app_files[$i];
+        if($req_path == $app_path){
+            return TRUE;
+        }
+    }
 
-if(isset($_POST['action']) && $_SERVER['HTTP_REFERER'] == $app_path){
+    // $dp = newDataPacket();
+    // $dp['debug'] = substr($_SERVER['HTTP_REFERER'], 0, strpos($_SERVER['HTTP_REFERER'], '?'));
+    // $dp['debug'] .= ' and ';
+    // $dp['debug'] .= 'http://'.$path['dirname'].'/'.$app_files[0].'?';
+
+    // echo json_encode($dp);
+
+    return FALSE;
+}
+
+if(isset($_POST['action']) && checkRef()){
     if($_POST['action'] == 'save'){
         //second param true does any needed conversions on input objects
         $sketch = json_decode($_POST['sketch'], true);
@@ -89,5 +106,9 @@ if(isset($_POST['action']) && $_SERVER['HTTP_REFERER'] == $app_path){
         $data_packet['debug'] = json_encode($GLOBALS['root_ids']);
         echo json_encode($data_packet);
     }
+}else{//the ajax request is coming from a wrong path
+    $data_packet = newDataPacket();
+    $data_packet['error'] = "I don't know you: ".$_SERVER['HTTP_REFERER'];
+    echo json_encode($data_packet);
 }
 ?>

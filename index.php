@@ -19,7 +19,7 @@ function getPane($id_list, $paneNum, $active_id){
         }
 
         $img_href = 'location.href=\'index.php?uid='.$skObj['uid'].'\'';
-        $scribble_href = "";
+        $scribble_href = 'scribble(\''.$skObj['uid'].'\')';
         $thumb_div = html_div($imgWithLabel, $skObj['uid'], $class, $img_href, $scribble_href);
         $thumbs .= $thumb_div;
     }
@@ -50,13 +50,14 @@ function getViewerHTML($sketch_id){
 }
 
 $homePageURL = $_SERVER['REQUEST_URI'];
-if(isset($_SERVER['HTTP_REFERER']) && $_SERVER['HTTP_REFERER'] == $homePageURL && issset($_GET['skID'])){
-    $sketchID = $_GET['skID'];
+if(isset($_SERVER['HTTP_REFERER']) && $_SERVER['HTTP_REFERER'] == $homePageURL && issset($_GET['uid'])){
+    $sketchID = $_GET['uid'];
     print getViewerHTML($sketchID);
 }else{
     //if user manually enters some id, then we redirect him to the main page.
     //header("Location: index.php");
 }
+
 print<<<END
 <!DOCTYPE html>
 <html>
@@ -77,7 +78,7 @@ END;
 print getViewerHTML($_GET['uid']);
 
 print<<<END
-            <div>
+            </div>
             <div id = "page_footer">
                 <a href="http://validator.w3.org/check?uri=referer" id = "validation_link" target="_blank">
                     Validate this page
@@ -88,6 +89,12 @@ print<<<END
             </div>
             
         </div>
+        <script type="text/javascript">
+            function scribble(uid){
+                var href = 'scribble.php?uid='+uid;
+                scribWindow = window.open(href, 'Scribble', 'width=630,height=670,scrollbars=no');
+            }
+        </script>
     </body>
 </html>
 END;
