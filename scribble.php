@@ -1,13 +1,22 @@
 <?php
+include 'common.php';
 
 $script = "";
 if(isset($_GET['uid'])){
-    $uid = $_GET['uid'];
-    $script = <<<END
+    if(file_exists($GLOBALS['sketch_dir'].$_GET['uid'].'.json')){
+        $uid = $_GET['uid'];
+        $script = <<<END
+            <script type="text/javascript">
+                loadSketch('$uid');
+            </script>
+END;
+    }else{
+        $script = <<<END
         <script type="text/javascript">
-            loadSketch('$uid');
+            alert('Could not find the sketch file');
         </script>
 END;
+    }
 }else{
     $script = <<<END
         <script type="text/javascript">
@@ -104,6 +113,14 @@ print<<<END
         <script type = "text/JavaScript" src = "funcLibrary.js"></script>
         <script type = "text/JavaScript" src = "scribbleScript.js"></script>
         $script
+
+        <script type="text/javascript">
+            //when scribble app is closed, this refreshes the main sketch tree page
+            window.onunload = refreshParent;
+            function refreshParent() {
+                window.opener.location.reload();
+            }
+        </script>
     </body>
 </html>
 END;

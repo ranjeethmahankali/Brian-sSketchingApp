@@ -20,7 +20,7 @@ function getPane($id_list, $paneNum, $active_id){
 
         $img_href = 'location.href=\'index.php?uid='.$skObj['uid'].'\'';
         $scribble_href = 'scribble(\''.$skObj['uid'].'\')';
-        $thumb_div = html_div($imgWithLabel, $skObj['uid'], $class, $img_href, $scribble_href);
+        $thumb_div=html_div($imgWithLabel,$skObj['uid'],$class,$img_href,$scribble_href,$skObj['name']);
         $thumbs .= $thumb_div;
     }
     $pane = html_div($thumbs, 'pane_'.$paneNum, 'pane');
@@ -31,7 +31,13 @@ function getPane($id_list, $paneNum, $active_id){
 //this method should calculate all the divs are return them
 function getViewerHTML($sketch_id){
     //this is the under construction return this and nothing else when u want to use it
-    $under_const_msg = html_div('This is under construction, please visit after some time','message');
+    // $under_const_msg = html_div('This is under construction, please visit after some time','message');
+    
+    //if the uid is invalid then redirect to the normal main page by ignoring the id
+    $filePath = $GLOBALS['sketch_dir'].$sketch_id.'.json';
+    if(!file_exists($filePath)){
+        unset($sketch_id);
+    }
     
     $treeList = getTreeList($sketch_id);
     //adding the root sketches to the page
@@ -70,6 +76,9 @@ print<<<END
     <body>
         <div id="wrapper">
             <div id="page_header">
+                <br>
+                Navigate the sketch tree and doubleclick a sketch to edit it or create a:
+                <button onclick="scribble()">New Sketch</button>
             </div>
             <div id="page_content">
 END;
@@ -80,19 +89,17 @@ print getViewerHTML($_GET['uid']);
 print<<<END
             </div>
             <div id = "page_footer">
-                <a href="http://validator.w3.org/check?uri=referer" id = "validation_link" target="_blank">
-                    Validate this page
-                </a> | 
-                <a href = "../a2/index.html">About Me</a> |
-                <a href = "../index.html">Home Page</a> |
-                <a href = "../contact/index.php">Contact me</a>
             </div>
             
         </div>
         <script type="text/javascript">
             function scribble(uid){
-                var href = 'scribble.php?uid='+uid;
-                scribWindow = window.open(href, 'Scribble', 'width=630,height=670,scrollbars=no');
+                if(uid === undefined){
+                    var href = 'scribble.php';    
+                }else{
+                    var href = 'scribble.php?uid='+uid;
+                }
+                scribWindow = window.open(href, 'Scribble', 'width=625,height=670,scrollbars=no');
             }
         </script>
     </body>
