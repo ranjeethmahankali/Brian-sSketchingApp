@@ -1,6 +1,6 @@
 <?php
 
-$sketch_dir = 'sketches/';
+$sketch_dir = 'http://students.washington.edu/rnjth94/arch482/BriansSketchingApp/sketches/';
 $roots_file = 'root_sketches.json';
 $thumb_dir = 'thumbs/';
 
