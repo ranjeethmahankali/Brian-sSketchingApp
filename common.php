@@ -1,4 +1,5 @@
 <?php
+
 $sketch_dir = 'sketches/';
 $roots_file = 'root_sketches.json';
 $thumb_dir = 'thumbs/';
@@ -82,8 +83,10 @@ function getTreeList($sketch_id, $treeList = array()){
 
 //from here on are functions that return html code for quick page building
 //this function just returns a generic division hmtl with given content and id
-function html_div($content, $id="none", $class="none", $clickHref="", $dblClickHref=""){
-    $div='<div id="'.$id.'" class="'.$class.'" onclick="'.$clickHref.'" ondblclick="'.$dblClickHref.'">';
+function html_div($content, $id="none", $class="none", $clickHref="", $dblClickHref="", $title=""){
+    $div='<div id="'.$id.'" class="'.$class.'" onclick="'.$clickHref.'" ondblclick="'.$dblClickHref.'"';
+    if($title != ""){$div .= 'title="'.$title.'"';}
+    $div .= '>';
     $div .= $content;
     $div .= '</div>';
 
@@ -100,4 +103,13 @@ function html_a($content, $href, $id="none", $class="none"){
     $a = '<a href="'.$href.'" id="'.$id.'" class="'.$class.'">'.$content.'</a>';
     return $a;
 }
+
+function console_log($content){
+    $script = '<script type="text/javascript">';
+    $script .= 'console.log('.json_encode($content).')';
+    $script .= '</script>';
+
+    print $script;
+}
+
 ?>

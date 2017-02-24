@@ -65,19 +65,15 @@ function checkRef(){
     $path  = pathinfo($self_path);
     $app_files = array('scribble.php', 'scribble.html');
     for($i = 0; $i < count($app_files); $i++){
-        $req_path = substr($_SERVER['HTTP_REFERER'], 0, strpos($_SERVER['HTTP_REFERER'], '?'));
+        $req_path = $_SERVER['HTTP_REFERER'];
+        if(strpos($_SERVER['HTTP_REFERER'], '?') !== FALSE){
+            $req_path = substr($_SERVER['HTTP_REFERER'], 0, strpos($_SERVER['HTTP_REFERER'], '?'));
+        }
         $app_path = 'http://'.$path['dirname'].'/'.$app_files[$i];
         if($req_path == $app_path){
             return TRUE;
         }
     }
-
-    // $dp = newDataPacket();
-    // $dp['debug'] = substr($_SERVER['HTTP_REFERER'], 0, strpos($_SERVER['HTTP_REFERER'], '?'));
-    // $dp['debug'] .= ' and ';
-    // $dp['debug'] .= 'http://'.$path['dirname'].'/'.$app_files[0].'?';
-
-    // echo json_encode($dp);
 
     return FALSE;
 }
@@ -95,16 +91,21 @@ if(isset($_POST['action']) && checkRef()){
 
     }elseif($_POST['action'] == 'load'){
         $filePath = $sketch_dir.$_POST['sketch_id'].'.json';
-        $sketch_obj = getSketchObject($_POST['sketch_id']);
-
-        //building the data packet to send
-        $data_packet = newDataPacket();
-        $data_packet['sketch_name'] = $sketch_obj['name'];
-        $data_packet['message'] = 'Succesfully loaded ';
-        $data_packet['sketch'] = getJsonStr($filePath);
-        //adding debug message if needed
-        $data_packet['debug'] = json_encode($GLOBALS['root_ids']);
-        echo json_encode($data_packet);
+        if(file_exists($filePath)){
+            $sketch_obj = getSketchObject($_POST['sketch_id']);
+            //building the data packet to send
+            $data_packet = newDataPacket();
+            $data_packet['sketch_name'] = $sketch_obj['name'];
+            $data_packet['message'] = 'Succesfully loaded ';
+            $data_packet['sketch'] = getJsonStr($filePath);
+            //adding debug message if needed
+            $data_packet['debug'] = json_encode($GLOBALS['root_ids']);
+            echo json_encode($data_packet);
+        }else{
+            $data_packet = newDataPacket();
+            $data_packet['error'] = 'Could not find that sketch file !';
+            echo $data_packet;
+        }
     }
 }else{//the ajax request is coming from a wrong path
     $data_packet = newDataPacket();

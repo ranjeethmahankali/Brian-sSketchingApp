@@ -1077,7 +1077,7 @@ function loadImage() {
 		reader.onload = function (e) {
 			//$('#imageUploaded').attr('src', e.target.result);
 			$('#imageUploaded').remove();
-			$('<img src="'+e.target.result+'" id="imageUploaded" height="100px" style="visibility:hidden"/>').appendTo('#bottomBar');
+			$('<img src="'+e.target.result+'" id="imageUploaded" height="100px" style="visibility:hidden"/>').appendTo('body');
 			//imageUploaded.src = e.target.result;
 		}
 		
@@ -1200,8 +1200,10 @@ function loadSketch(sketchID){
 			//now updating the helpText that loading is finished
 			//loading the sketch itself into the document
 			skObj.parent = skObj.uid;
+			skObj.child = new Array();
 			skObj.uid  = uuid.v1();
 			skObj.name = "None";
+			skObj.date = new Date();
 			
 			//clearing any prevous sketches
 			resetApp();

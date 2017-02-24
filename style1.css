@@ -10,6 +10,7 @@ a:link{
     padding:0px;
     z-index: 1000;
     padding:0px;
+    color:white;
 }
 #page_title{
     font-weight: bold;
@@ -65,6 +66,8 @@ div.thumb_active{
     text-align: center;
     color:black;
     text-decoration: none;
+    text-overflow: ellipsis;
+    overflow:hidden;
 }
 div.thumb_active .label{
     color:white;
