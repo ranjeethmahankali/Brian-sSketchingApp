@@ -1,5 +1,8 @@
 <?php
+require_once __DIR__ . '/src/Facebook/autoload.php';
 include 'common.php';
+include 'login.php';
+
 initialize_roots();
 
 //this takes a list of ids, puts those thumbnails in a div and returns it
@@ -32,13 +35,13 @@ function getPane($id_list, $paneNum, $active_id){
 function getViewerHTML($sketch_id){
     //this is the under construction return this and nothing else when u want to use it
     // $under_const_msg = html_div('This is under construction, please visit after some time','message');
-    
+
     //if the uid is invalid then redirect to the normal main page by ignoring the id
     $filePath = $GLOBALS['sketch_dir'].$sketch_id.'.json';
     if(!file_exists($filePath)){
         unset($sketch_id);
     }
-    
+
     $treeList = getTreeList($sketch_id);
     //adding the root sketches to the page
     $root_ids = $GLOBALS['root_ids'];
@@ -64,44 +67,70 @@ if(isset($_SERVER['HTTP_REFERER']) && $_SERVER['HTTP_REFERER'] == $homePageURL &
     //header("Location: index.php");
 }
 
+
 print<<<END
 <!DOCTYPE html>
 <html>
     <head>
-        <meta charset="utf-8"/>
-        <title>Brian's Sketching App</title>
-        <link rel="stylesheet" type="text/css" href="../style.css">
+       <meta charset="utf-8"/>
+        <title>Brians Sketching App</title>
         <link rel="stylesheet" type="text/css" href="style1.css">
+        <meta charset="UTF-8">
+        </style>
     </head>
     <body>
+END;
+
+if (!isset($_SESSION['facebook_access_token'])){
+    echo '<a href="' . $loginUrl . '">Log in with Facebook!</a>';
+}else{
+
+print<<<END
         <div id="wrapper">
             <div id="page_header">
                 <br>
                 Navigate the sketch tree and doubleclick a sketch to edit it or create a:
                 <button onclick="scribble()">New Sketch</button>
+                <div>
+
+
+END;
+//print log in user name and fb profile image
+$fb->setDefaultAccessToken($_SESSION['facebook_access_token']);
+$response = $fb->get('/me?fields=email,name');
+$userNode = $response->getGraphUser();
+echo 'Name: ' .$userNode->getName().'<br />';
+$image = 'https://graph.facebook.com/'.$userNode->getId().'/picture?width=150';
+echo "<img src ='$image' />";
+
+print<<<END
+    </div>
             </div>
             <div id="page_content">
 END;
 
-//pring main content here
+//print main content here
 print getViewerHTML($_GET['uid']);
 
 print<<<END
             </div>
             <div id = "page_footer">
             </div>
-            
+
         </div>
         <script type="text/javascript">
             function scribble(uid){
                 if(uid === undefined){
-                    var href = 'scribble.php';    
+                    var href = 'scribble.php';
                 }else{
                     var href = 'scribble.php?uid='+uid;
                 }
                 scribWindow = window.open(href, 'Scribble', 'width=625,height=670,scrollbars=no');
             }
         </script>
+END;
+}
+print<<< END
     </body>
 </html>
 END;
