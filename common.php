@@ -1,6 +1,6 @@
 <?php
 
-$sketch_dir = 'http://students.washington.edu/rnjth94/arch482/BriansSketchingApp/sketches/';
+$sketch_dir = 'sketches/';
 $roots_file = 'root_sketches.json';
 $thumb_dir = 'thumbs/';
 
@@ -23,6 +23,7 @@ function empty_roots_file(){
     $roots_file = $GLOBALS['roots_file'];
     $roots = array();
     $fp = fopen($sketch_dir.$roots_file, 'w');
+    console_log($sketch_dir.$roots_file);
     fwrite($fp, json_encode($roots));
     fclose($fp);
     return $roots;
