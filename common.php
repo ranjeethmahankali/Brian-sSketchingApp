@@ -113,4 +113,11 @@ function console_log($content){
     print $script;
 }
 
+function alert($content){
+    $script = '<script type="text/javascript">';
+    $script .= 'alert('.json_encode($content).')';
+    $script .= '</script>';
+
+    print $script;
+}
 ?>

@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/src/Facebook/autoload.php';
+//include"common.php";
 $fb = new Facebook\Facebook([
   'app_id' => '1817429491842129',
   'app_secret' => '7176bc285dd5a7b4b7097c25751ce725',
@@ -20,12 +21,21 @@ $fb = new Facebook\Facebook([
     exit;
   }
 
+  $self_path = __FILE__;
+  $path  = pathinfo($self_path);
+  $target = 'http://'.$path['dirname'].'/index.php';
+
   if (isset($accessToken)) {
     // Logged in!
     $_SESSION['facebook_access_token'] = (string) $accessToken;
+    //alert($target);
     // Now you can redirect to another page and use the
     // access token from $_SESSION['facebook_access_token']
-    header('Location: http://students.washington.edu/arroyv/arch482/BriansSketchingApp/index.php');
+    $self_path = "http://".$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'];
+    $path  = pathinfo($self_path);
+    $target = 'http://'.$path['dirname'].'/index.php';
+
+    header("Location: $target");
   }
 
 ?>

@@ -88,10 +88,9 @@ if (!isset($_SESSION['facebook_access_token'])){
 print<<<END
         <div id="wrapper">
             <div id="page_header">
-                <br>
-                Navigate the sketch tree and doubleclick a sketch to edit it or create a:
-                <button onclick="scribble()">New Sketch</button>
-                <div>
+                <p>Navigate the sketch tree and doubleclick a sketch to edit it or create a:
+                <button onclick="scribble()">New Sketch</button></p>
+                <div id="user_info">
 
 
 END;
@@ -99,12 +98,12 @@ END;
 $fb->setDefaultAccessToken($_SESSION['facebook_access_token']);
 $response = $fb->get('/me?fields=email,name');
 $userNode = $response->getGraphUser();
-echo 'Name: ' .$userNode->getName().'<br />';
-$image = 'https://graph.facebook.com/'.$userNode->getId().'/picture?width=150';
-echo "<img src ='$image' />";
+print $userNode->getName().'<br />';
+$image = 'https://graph.facebook.com/'.$userNode->getId().'/picture?height=50';
+print "<img src ='$image' id='profile_pic'/>";
 
 print<<<END
-    </div>
+                </div>
             </div>
             <div id="page_content">
 END;

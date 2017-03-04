@@ -1,4 +1,5 @@
 <?php
+
 session_start();
  $fb = new Facebook\Facebook([
   'app_id' => '1817429491842129',
@@ -9,6 +10,10 @@ session_start();
 $helper = $fb->getRedirectLoginHelper();
 
 $permissions = ['email']; // Optional permissions
-$loginUrl = $helper->getLoginUrl('http://students.washington.edu/arroyv/arch482/BriansSketchingApp/fb-callback.php', $permissions);
+$self_path = $_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'];
+$path  = pathinfo($self_path);
+$target = 'http://'.$path['dirname'].'/fb-callback.php';
 
+$loginUrl = $helper->getLoginUrl($target, $permissions);
+//$loginUrl = $helper->getLoginUrl('http://students.washington.edu/arroyv/arch482/BriansSketchingApp/fb-callback.php', $permissions);
 ?>
