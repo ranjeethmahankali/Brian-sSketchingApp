@@ -1,7 +1,17 @@
 <?php
+require_once __DIR__ . '/src/Facebook/autoload.php';
 include 'common.php';
+include 'login.php';
+
+$fb->setDefaultAccessToken($_SESSION['facebook_access_token']);
+$response = $fb->get('/me?fields=email,name');
+$userNode = $response->getGraphUser();
+
+$username = $userNode->getName();
+$userEmail = $userNode->getField('email');
 
 $script = "";
+
 if(isset($_GET['uid'])){
     if(file_exists($GLOBALS['sketch_dir'].$_GET['uid'].'.json')){
         $uid = $_GET['uid'];

@@ -98,7 +98,11 @@ END;
 $fb->setDefaultAccessToken($_SESSION['facebook_access_token']);
 $response = $fb->get('/me?fields=email,name');
 $userNode = $response->getGraphUser();
-print $userNode->getName().'<br />';
+
+$username = $userNode->getName();
+//$userEmail = $userNode->getField('email');
+
+print $username.'<br />';
 $image = 'https://graph.facebook.com/'.$userNode->getId().'/picture?height=50';
 print "<img src ='$image' id='profile_pic'/>";
 

@@ -75,6 +75,7 @@ function newSketch(parentID, authorName, dateStamp){
 				'tempObj': new Array(),
 				'delObj': new Array(),//these are the undone objects ready to use for redo
 				'author':'None', 
+				'email':'',
 				'date':dateStamp, 
 				'uid': uuid.v1(),
 				'parent': 'None',
@@ -1204,6 +1205,7 @@ function loadSketch(sketchID){
 			skObj.uid  = uuid.v1();
 			skObj.name = "None";
 			skObj.date = new Date();
+			console.log('here');
 			
 			//clearing any prevous sketches
 			resetApp();

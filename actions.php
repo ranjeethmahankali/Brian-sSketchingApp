@@ -1,6 +1,15 @@
 <?php
-
+require_once __DIR__ . '/src/Facebook/autoload.php';
 include 'common.php';
+include 'login.php';
+
+$fb->setDefaultAccessToken($_SESSION['facebook_access_token']);
+$response = $fb->get('/me?fields=email,name');
+$userNode = $response->getGraphUser();
+
+$username = $userNode->getName();
+$userEmail = $userNode->getField('email');
+
 initialize_roots();
 
 // print_r($root_ids);
@@ -82,6 +91,9 @@ if(isset($_POST['action']) && checkRef()){
     if($_POST['action'] == 'save'){
         //second param true does any needed conversions on input objects
         $sketch = json_decode($_POST['sketch'], true);
+        $sketch['author'] = $username;
+        $sketch['email'] = $userEmail;
+
         $save_path = saveSketch($sketch);
         //building the data_packet to send
         $data_packet = newDataPacket();
@@ -93,6 +105,8 @@ if(isset($_POST['action']) && checkRef()){
         $filePath = $sketch_dir.$_POST['sketch_id'].'.json';
         if(file_exists($filePath)){
             $sketch_obj = getSketchObject($_POST['sketch_id']);
+            $sketch_obj['author'] = $username;
+            $sketch_obj['email'] = $userEmail;
             //building the data packet to send
             $data_packet = newDataPacket();
             $data_packet['sketch_name'] = $sketch_obj['name'];
