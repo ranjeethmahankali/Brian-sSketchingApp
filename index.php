@@ -59,14 +59,17 @@ function getViewerHTML($sketch_id){
 }
 
 $homePageURL = $_SERVER['REQUEST_URI'];
-if(isset($_SERVER['HTTP_REFERER']) && $_SERVER['HTTP_REFERER'] == $homePageURL && issset($_GET['uid'])){
+if(!isset($_SERVER['HTTP_REFERER']) && $_SERVER['HTTP_REFERER'] != $homePageURL && isset($_GET['uid'])){
     $sketchID = $_GET['uid'];
-    print getViewerHTML($sketchID);
-}else{
-    //if user manually enters some id, then we redirect him to the main page.
-    //header("Location: index.php");
+    //print getViewerHTML($sketchID);
+    $self_path = $_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'];
+    $path  = pathinfo($self_path);
+    $target = 'http://'.$path['dirname'].'/index.php';
+    header("Location: $target");
 }
 
+//if this session variable is set and equal to YES, then we know that user opened scribble app
+//from the home page and not by entering the url manually
 
 print<<<END
 <!DOCTYPE html>
@@ -81,37 +84,37 @@ print<<<END
     <body>
 END;
 
-if (!isset($_SESSION['facebook_access_token'])){
-    echo '<a href="' . $loginUrl . '">Log in with Facebook!</a>';
-}else{
+$topLine  = "<p>Navigate the sketch tree below. If you want to edit one or make your own sketch, ";
+$topLine .= "<button onclick=\"location.href='$loginUrl'\">Login with Facebook</button></p>";
+
+$userInfo = "";
+if (isset($_SESSION['facebook_access_token'])){
+    $topLine = "<p>Navigate the sketch tree and doubleclick a sketch to edit it or create a:";
+    $topLine .= "<button onclick='scribble()'>New Sketch</button></p>";
+
+    //print log in user name and fb profile image
+    $fb->setDefaultAccessToken($_SESSION['facebook_access_token']);
+    $response = $fb->get('/me?fields=email,name');
+    $userNode = $response->getGraphUser();
+
+    $username = $userNode->getName();
+    //$userEmail = $userNode->getField('email');
+
+    $userInfo = $username.'<br />';
+    $image = 'https://graph.facebook.com/'.$userNode->getId().'/picture?height=50';
+    $userInfo .= "<img src ='$image' id='profile_pic'/>";
+}
 
 print<<<END
         <div id="wrapper">
             <div id="page_header">
-                <p>Navigate the sketch tree and doubleclick a sketch to edit it or create a:
-                <button onclick="scribble()">New Sketch</button></p>
+                $topLine
                 <div id="user_info">
-
-
-END;
-//print log in user name and fb profile image
-$fb->setDefaultAccessToken($_SESSION['facebook_access_token']);
-$response = $fb->get('/me?fields=email,name');
-$userNode = $response->getGraphUser();
-
-$username = $userNode->getName();
-//$userEmail = $userNode->getField('email');
-
-print $username.'<br />';
-$image = 'https://graph.facebook.com/'.$userNode->getId().'/picture?height=50';
-print "<img src ='$image' id='profile_pic'/>";
-
-print<<<END
+                $userInfo
                 </div>
             </div>
             <div id="page_content">
 END;
-
 //print main content here
 print getViewerHTML($_GET['uid']);
 
@@ -131,9 +134,6 @@ print<<<END
                 scribWindow = window.open(href, 'Scribble', 'width=625,height=670,scrollbars=no');
             }
         </script>
-END;
-}
-print<<< END
     </body>
 </html>
 END;

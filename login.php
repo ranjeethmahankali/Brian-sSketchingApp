@@ -15,5 +15,4 @@ $path  = pathinfo($self_path);
 $target = 'http://'.$path['dirname'].'/fb-callback.php';
 
 $loginUrl = $helper->getLoginUrl($target, $permissions);
-//$loginUrl = $helper->getLoginUrl('http://students.washington.edu/arroyv/arch482/BriansSketchingApp/fb-callback.php', $permissions);
 ?>

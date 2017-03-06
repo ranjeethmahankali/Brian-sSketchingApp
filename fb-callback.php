@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once __DIR__ . '/src/Facebook/autoload.php';
+include "common.php";
+//ob_start();
 
 $fb = new Facebook\Facebook([
   'app_id' => '1817429491842129',
@@ -31,11 +33,14 @@ $fb = new Facebook\Facebook([
 
     // Now you can redirect to another page and use the
     // access token from $_SESSION['facebook_access_token']
-    $self_path = "http://".$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'];
+    $self_path = $_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'];
     $path  = pathinfo($self_path);
-    $target = 'http://'.$path['dirname'].'/index.php';
-
-    header("Location: $target");
+    $homePageURL = 'http://'.$path['dirname'].'/index.php';
+    //sending to homePage or this following target - which is the address of
+    //whatever page the user logged in from
+    $target = $_SESSION['currentURL'];
+    //alert($target);
+    header("Location: $homePageURL");
   }
 
 ?>

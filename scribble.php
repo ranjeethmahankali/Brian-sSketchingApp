@@ -3,12 +3,38 @@ require_once __DIR__ . '/src/Facebook/autoload.php';
 include 'common.php';
 include 'login.php';
 
-$fb->setDefaultAccessToken($_SESSION['facebook_access_token']);
-$response = $fb->get('/me?fields=email,name');
-$userNode = $response->getGraphUser();
 
-$username = $userNode->getName();
-$userEmail = $userNode->getField('email');
+$self_path = $_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'];
+$path  = pathinfo($self_path);
+$homePageURL = array(
+    'http://'.$path['dirname'].'/index.php',
+    'http://'.$path['dirname'].'/',
+    'http://'.$path['dirname']
+    );
+
+$refURL = $url=strtok($_SERVER["HTTP_REFERER"],'?');
+if(!in_array($refURL, $homePageURL)){
+    $redirect = $homePageURL[0];
+    header("Location: $redirect");
+    die();
+}
+
+if (!isset($_SESSION['facebook_access_token'])){
+    print<<<END
+    <script type="text/javascript">
+        function loginToFb(){
+            window.close();
+            window.opener.location = '$loginUrl';
+        }
+    </script>
+END;
+    print"<p>Log in with facebook to use the app: ";
+    print"<button onclick=\"loginToFb()\">Login with Facebook</button></p>";
+    //$_SESSION['currentURL'] = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+    //header("Location: $loginUrl");
+    //$_SESSION['fromLogin'] = true;
+    die();
+}
 
 $script = "";
 
