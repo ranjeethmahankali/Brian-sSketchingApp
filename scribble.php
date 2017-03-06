@@ -11,14 +11,14 @@ $homePageURL = array(
     'http://'.$path['dirname'].'/',
     'http://'.$path['dirname']
     );
-
+//if referer url is not right, redirect to home page
 $refURL = $url=strtok($_SERVER["HTTP_REFERER"],'?');
 if(!in_array($refURL, $homePageURL)){
     $redirect = $homePageURL[0];
     header("Location: $redirect");
     die();
 }
-
+//force user to login if not already logged in
 if (!isset($_SESSION['facebook_access_token'])){
     print<<<END
     <script type="text/javascript">
