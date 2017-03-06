@@ -229,8 +229,20 @@ function renderObject(obj, rc){
 	}
 	else if(obj.type == "image"){
 		var img = new Image();
+		var loaded = false;
+		img.onload = function(){loaded = true;}
 		img.src = obj.image;
-		img.onload = function(){rc.drawImage(img,0,0,canvas1.width,canvas1.height);}
+		//this is not the best way but no option right now
+		function checkLoad(){
+			if(!loaded){
+				window.setTimeout(checkLoad, 100);
+			}else{
+				return;
+			}
+		}
+		checkLoad();//this is recursed until the image is loaded.
+		//then it is drawn to canvas before moving on.
+		rc.drawImage(img,0,0,canvas1.width,canvas1.height);
 	}
 	else if(obj.type == "text"){
 		rc.font = obj.font;
