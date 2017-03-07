@@ -3,6 +3,11 @@
 $sketch_dir = 'sketches/';
 $roots_file = 'root_sketches.json';
 $thumb_dir = 'thumbs/';
+$valid_url = array(
+    "http://students.washington.edu/rnjth94/arch482/BriansSketchingApp/",
+    "http://students.washington.edu/arroyv/arch482/BriansSketchingApp/",
+    "http://students.washington.edu/nadera/arch482/BriansSketchingApp/"
+);
 
 $root_ids = array();
 //checking of the rootfile exists if yes then loading it, if not then creating it
@@ -119,5 +124,28 @@ function alert($content){
     $script .= '</script>';
 
     print $script;
+}
+
+//these are non html functions that are generally useful
+function ping($url, $data){
+    //this functtion pings the php file at $url, with associative array $data
+    //with method post
+    // build the urlencoded data
+    $postvars = http_build_query($fields);
+
+    // open connection
+    $ch = curl_init();
+
+    // set the url, number of POST vars, POST data
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, count($fields));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postvars);
+
+    // execute post
+    $result = curl_exec($ch);
+
+    // close connection
+    curl_close($ch);
+    return result;
 }
 ?>
